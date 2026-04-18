@@ -294,6 +294,14 @@ Fix: override the platform mapping in the user dict — add `СтрНачина�
 
 Also caught by `postbuild_patch.py` as a fallback (matches `StrStartsWith(` / `СтрНачинаетсяС(` and rewrites to the correct form). When tests surface more "not defined" errors, verify the actual English name in 1C platform and extend the list; don't blindly transform by pattern.
 
+### Camelcase dict translates string literals (not just identifiers)
+
+EDT tokenizes **string literal content** against `common-camelcase_<lang>.dict` and applies per-token substitutions. Literals like `"Секретный ключ"` get translated to `"Secret key"`, `"Какие-то данные"` to `"Which-then data"`. This breaks tests that compare **bytes** (HMAC, hash, URL-encoded content) because the literal's encoded bytes differ.
+
+Removing the token-level entries from the dict is not a fix — the same tokens are needed to translate legitimate identifiers (composites).
+
+Fix: phase 2 of `postbuild_patch.py` does line-aligned diff against the RU source module and **reverts** non-identifier-like literals (anything containing spaces, punctuation, URL chars, etc.) back to Russian. Identifier-like literals (procedure names for `Execute`, struct key lists like `"Name, Value"`) are left translated so runtime lookups keep working. Configure `LITERAL_RESTORE_PAIRS` with `(ru_path, en_path)` tuples for each module needing this treatment — typically test modules where test data lives in string literals.
+
 ## Translation workflow for a new project
 
 1. Import source project and create empty dependent translation project in EDT. EDT auto-generates `.lstr` / `.trans` / `.dict` files with source-language (Russian) placeholder values.

@@ -14,4 +14,5 @@ check_translated.out
 check_translated2.out
 missing_keys.out
 str_ids.out
+mistranslated_literals.out
 untr/

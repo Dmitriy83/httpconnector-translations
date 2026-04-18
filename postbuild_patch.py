@@ -18,6 +18,16 @@ from pathlib import Path
 
 PROJ = Path(r"C:/Users/DmitryZhikharev/AppData/Local/1C/1cedtstart/projects/HTTP connector/HTTPConnector_translated_project")
 
+# Per-file RU source for literal restoration (EDT mistranslates some string
+# literals via camelcase dict tokenization — test data literals like
+# "Секретный ключ" → "Secret key" which breaks HMAC/byte tests).
+LITERAL_RESTORE_PAIRS = [
+    (
+        Path(r"C:/Users/DmitryZhikharev/AppData/Local/1C/1cedtstart/projects/HTTP connector/HTTPConnector_ru/src/DataProcessors/Тесты/ObjectModule.bsl"),
+        PROJ / "src/DataProcessors/Tests/ObjectModule.bsl",
+    ),
+]
+
 # (russian_source, english_target) — longest-first ordering matters for
 # substring overlaps (e.g., match "повторы будут выполняться для конкретных
 # кодов состояний." before the shorter prefix).
@@ -151,6 +161,71 @@ def patch_file(path: Path) -> tuple[int, list[str]]:
     return total, applied
 
 
+# --- Literal restoration (phase 2) ---
+
+_LIT = re.compile(r'"([^"]*)"')
+_CYR = re.compile(r"[А-Яа-яЁё]")
+
+
+def _is_identifier_like(s: str) -> bool:
+    """Pure-identifier literals (procedure names for Execute, struct key lists
+    like 'Name, Value') — these SHOULD stay translated, skip restoration."""
+    if re.search(r"[ \-!?|%&?=:/<>]", s):
+        compact = re.sub(r",\s*", "", s)
+        if re.match(r"^[A-Za-zА-Яа-яЁё0-9_]+$", compact):
+            return True
+        return False
+    return bool(re.match(r"^[A-Za-zА-Яа-яЁё0-9_]+$", s))
+
+
+def restore_literals(ru_path: Path, en_path: Path) -> int:
+    """Revert EDT's tokenized translation of Russian string literals that
+    represent test/data content (not procedure names or struct keys).
+    Line-by-line diff against RU source; restores only non-identifier literals."""
+    if not ru_path.exists() or not en_path.exists():
+        return 0
+
+    raw_en = en_path.read_bytes()
+    has_bom = raw_en.startswith(b"\xef\xbb\xbf")
+    body_en = raw_en[3:] if has_bom else raw_en
+    text_en = body_en.decode("utf-8")
+    had_crlf = "\r\n" in text_en
+    if had_crlf:
+        text_en = text_en.replace("\r\n", "\n")
+
+    ru_text = ru_path.read_text(encoding="utf-8-sig").replace("\r\n", "\n")
+    en_lines = text_en.split("\n")
+    ru_lines = ru_text.split("\n")
+
+    reverted = 0
+    out_lines = []
+    for i, en_line in enumerate(en_lines):
+        if i >= len(ru_lines):
+            out_lines.append(en_line)
+            continue
+        ru_lits = _LIT.findall(ru_lines[i])
+        en_lits = _LIT.findall(en_line)
+        if len(ru_lits) != len(en_lits):
+            out_lines.append(en_line)
+            continue
+        new_line = en_line
+        for ru_lit, en_lit in zip(ru_lits, en_lits):
+            if ru_lit == en_lit or not _CYR.search(ru_lit) or _is_identifier_like(ru_lit):
+                continue
+            new_line = new_line.replace(f'"{en_lit}"', f'"{ru_lit}"', 1)
+            reverted += 1
+        out_lines.append(new_line)
+
+    out_text = "\n".join(out_lines)
+    if had_crlf:
+        out_text = out_text.replace("\n", "\r\n")
+    out_raw = out_text.encode("utf-8")
+    if has_bom:
+        out_raw = b"\xef\xbb\xbf" + out_raw
+    en_path.write_bytes(out_raw)
+    return reverted
+
+
 def main():
     import sys
     # Force UTF-8 output for non-ASCII identifiers in console (Windows cp1251 default).
@@ -173,7 +248,17 @@ def main():
                 print(line)
             grand_total += count
 
-    print(f"\nTOTAL: {grand_total} replacement(s)")
+    print(f"\nTOTAL phase-1 replacements: {grand_total}")
+
+    # Phase 2: restore Russian string literals that EDT mistranslated (test data).
+    print("\nphase 2 — literal restoration (line-aligned against RU source):")
+    total_restored = 0
+    for ru_path, en_path in LITERAL_RESTORE_PAIRS:
+        n = restore_literals(ru_path, en_path)
+        if n:
+            print(f"  {en_path.relative_to(PROJ)} - restored {n} literal(s)")
+            total_restored += n
+    print(f"\nTOTAL phase-2 restorations: {total_restored}")
 
 
 if __name__ == "__main__":
