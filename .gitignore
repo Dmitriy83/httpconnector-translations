@@ -1,2 +1,11 @@
 *.code-workspace
 .claude/settings.local.json
+__pycache__/
+*.pyc
+
+# regenerable analysis outputs
+estimate.out
+glossary.txt
+untranslated.txt
+camelcase_cyr_tokens.txt
+untr/
