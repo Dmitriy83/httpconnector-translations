@@ -8,4 +8,6 @@ estimate.out
 glossary.txt
 untranslated.txt
 camelcase_cyr_tokens.txt
+camelcase_missing.txt
+apply_camelcase.out
 untr/
