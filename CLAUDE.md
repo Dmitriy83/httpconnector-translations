@@ -192,3 +192,105 @@ To find missing or untranslated entries, diff the corresponding files across lan
 - Between formats: `<File>_<lang>.lstr` vs `<File>_<lang>.trans` cover different keys — do not compare directly
 
 Both language files must have identical key sets. If a target-language file is missing, create it with the same keys as the other language's file and translate.
+
+## Tooling — translation pipeline
+
+Repository includes scripts that automate a multi-phase translation of a new dependent translation project. They were developed against HTTPConnector/dictionaries_en but are generic — retarget paths in constants at the top of each script to apply to another project.
+
+### Pipeline phases
+
+**A — exact-key migration** (`migrate.py`): pair dict files between an old translation project (reference) and a new one; copy values for keys that match byte-for-byte across the pair. Preserves file structure (header, blank lines, EOL, BOM).
+
+**B — alias-map migration** (`migrate_b.py`): parse BSL source of both en/ and ru/ copies, pair functions with identical names, zip parameters positionally → build a `ru_param → en_param` alias map. For each unmatched key in the new dict, translate Cyrillic tokens via the alias and look up the resulting English key in the old dict. Narrow but deterministic.
+
+**C — manual translation** (`translations_*.py` + `apply_*.py`): for remaining untranslated entries, human- or LLM-provided values stored in Python `TR = {key: english_value}` dicts. The applier reads the target dict file line-by-line, replaces values for keys in TR, preserves file structure.
+
+**camelcase tokenizer** (`camelcase_token_tr.py` + `apply_camelcase.py`): for `common-camelcase_<lang>.dict` where CamelCase composites combine Cyrillic and Latin parts (e.g., `GZipРазмерFooter`). Tokenizes each value, substitutes each Cyrillic token via a 600+ entry token dict, rejoins preserving Latin parts. Aborts with a report if any token lacks a translation.
+
+**Post-build patcher** (`postbuild_patch.py`): see "EDT LanguageTool quirks" below — covers residuals that EDT refuses to translate via dictionaries. Must run after every EDT dependent-translation rebuild.
+
+### Analysis scripts
+
+- `analyze.py` — count matching keys across old/new dicts, show examples
+- `estimate.py` — coverage analysis of alias-map vs doc-comment approaches
+- `extract_untranslated.py` / `extract_all_untranslated.py` — list keys whose values still contain Cyrillic (work remaining)
+- `camelcase_tokens.py` — tokenize CamelCase identifiers, count unique Cyrillic tokens
+- `find_missing_dict_keys.py` — identifiers used in RU source missing as keys in dict
+- `check_translated.py` / `check_translated2.py` — scan EDT-translated project for residual Cyrillic (code vs doc)
+
+### Dict-layout helpers
+
+- `sort_dict.py` — alphabetically sort entries of a dict file (EDT expects sorted order; appended-at-end entries may be ignored)
+- `fix_regions.py` — normalize SSL/БСП standard region names to canonical English (`ПрограммныйИнтерфейс=Public`, `СлужебныеПроцедурыИФункции=Private`, `ОбработчикиСобытий=EventHandlers`, etc.)
+- `fix_case.py` — normalize `PascalCase=lowercase` entries inherited from legacy dicts (`Cookie=cookie` → `Cookie=Cookie`, `Basic=basic` → `Basic=Basic`) — prevents "variable name must start with capital letter" warnings
+- `fix_camelcase.py` — case-normalize HTTP method names (`Get=GET` → `Get=Get`, `Put=put` → `Put=Put`) and add project-specific missing identifiers
+- `proper_split.py` / `move_to_common.py` / `move_back.py` / `move_remaining.py` / `final_revert.py` — experimental moves of entries between `common-camelcase_<lang>.dict` and `common_<lang>.dict` per EDT's `translation_storages.yml` filter rules (`camelcase: ONLY` vs `camelcase: NONE`)
+
+## EDT LanguageTool quirks (learned)
+
+Discovered while debugging HTTPConnector_en translation. Useful when the dependent-translation build leaves unexpected residuals.
+
+### Storage classification and file roles
+
+The source project's `.settings/translation_storages.yml` defines seven translation storages in read order. Key storages for dict files:
+
+- **`common-camelcase_<lang>.dict`** — `feature_filter: camelcase: ONLY, model: ONLY` — **only CamelCase identifiers** (multi-word: `GetValue`, `MyFunction`, `НоваяCookie`)
+- **`common_<lang>.dict`** — `feature_filter: camelcase: NONE, model: ONLY` — **only non-CamelCase** (single-word: `Имя`, `Данные`; platform keywords)
+- **`common_<lang>.lsdict`** — interface-side common (rare)
+
+**Consequence:** a single-word identifier like `Имя=Name` placed in `common-camelcase_<lang>.dict` will be IGNORED by EDT. Move it to `common_<lang>.dict`. Use `proper_split.py` or similar.
+
+### Sorted order matters
+
+EDT may ignore dict entries that appear after a blank line or out of alphabetical order. Always keep dict files sorted. `sort_dict.py` does this.
+
+### Case-normalization of values
+
+Legacy dicts migrated from old projects sometimes have lowercase values for PascalCase keys (`Cookie=cookie`, `Put=put`). When EDT applies these as identifiers, it produces variables like `cookies`, `put` — which trigger BSL validation warnings. Normalize values to match the key case (`fix_case.py`).
+
+### Standard region names (SSL/БСП)
+
+EDT expects canonical English region names per SSL standard:
+
+| Russian | English (canonical) |
+|---------|---------------------|
+| `ПрограммныйИнтерфейс` | `Public` |
+| `СлужебныйПрограммныйИнтерфейс` | `Internal` |
+| `СлужебныеПроцедурыИФункции` | `Private` |
+| `ОбработчикиСобытий` | `EventHandlers` |
+| `ОбработчикиСобытийФормы` | `FormEventHandlers` |
+| `ОбработчикиСобытийЭлементовШапкиФормы` | `FormHeaderItemsEventHandlers` |
+| `ОбработчикиКомандФормы` | `FormCommandsEventHandlers` |
+
+If a region translates to something non-canonical (like `ProgramInterface` or `HandlersEvents`), EDT issues "method should be placed in standard region Public/Internal/Private" warnings for every method in the region.
+
+### Dict-generator gaps in `.trans`
+
+For some methods, EDT's dict generator creates only `Method.X.Description` and `Method.X.Return.Description` keys, skipping per-field keys for sub-fields of the return structure. For similar methods with analogous doc format, it may generate 15+ per-field keys. A workaround: add the missing keys manually (`Method.X.Return.<Field>.Description`, etc.) — EDT will honor them on rebuild. See `add_newparams_keys.py` / `fix_newparams_finale.py` for examples.
+
+**Trigger for generator to produce per-field keys**: the heading line of the Return structure description in the BSL doc comment must not repeat elsewhere in the block. In HTTPConnector, two `// Возвращаемое значение:` comments in one method's doc (one for the method itself, one for a nested callback) made the generator treat both as one context and produce only a single key. Renaming the nested one (e.g., to `// Возвращает значение:`) unblocked the generator.
+
+### Translated project has both source and translation
+
+`HTTPConnector_translated_project/src/` contains BOTH English-named modules (translation output) AND Russian-named copies (mirrored from source). When post-processing the translated project, restrict scope to paths without Cyrillic components — see the filter in `postbuild_patch.py`.
+
+### Residuals and the post-build patcher
+
+Even with correct dictionaries and sub-field keys, some identifiers or phrases remain untranslated after `dependentTranslationBuilder` runs. Observed cases include specific identifiers and doc-comment blocks inside nested callback parameters. Root cause unclear (likely an EDT incremental-build or generator quirk — no reliable dictionary-level fix found).
+
+**`postbuild_patch.py`** is the pragmatic cover: it scans translated-project BSL files (English-path-only) and applies a table of literal Russian → English substitutions. Idempotent, deterministic, must be re-run after each EDT rebuild.
+
+## Translation workflow for a new project
+
+1. Import source project and create empty dependent translation project in EDT. EDT auto-generates `.lstr` / `.trans` / `.dict` files with source-language (Russian) placeholder values.
+2. Phase A: if an older translation for the same source exists, run `migrate.py` to copy exact-key matches.
+3. Phase B: run `migrate_b.py` to leverage positional alias map for common-named functions.
+4. Manual: translate remaining entries. Use `extract_all_untranslated.py` to list them; produce `translations_<file>.py`; run `apply_*.py`.
+5. Camelcase: if `common-camelcase_<lang>.dict` has Cyrillic values, run `apply_camelcase.py`.
+6. Dict hygiene: `sort_dict.py`, `fix_regions.py`, `fix_case.py`, `fix_camelcase.py`.
+7. Move entries to correct storage: `proper_split.py` (non-CamelCase → `common_<lang>.dict`).
+8. Build translated project in EDT.
+9. Scan residuals: `check_translated2.py`.
+10. For gaps, add missing `.trans` sub-field keys (follow pattern from similar methods).
+11. For unfixable residuals, populate `postbuild_patch.py` with replacement pairs and run after every rebuild.
+12. Final verify: `check_translated2.py` — should report `CODE issues: 0  DOC issues: 0`.

@@ -1,0 +1,170 @@
+"""Post-build patcher for HTTPConnector_translated_project.
+
+After EDT rebuilds the translated project, this script applies literal
+text replacements to translated module files to cover residual Russian
+fragments that EDT's LanguageTool doesn't translate via dictionaries
+(3 stuck code identifiers + doc-comment blocks where EDT's generator
+didn't produce sub-field keys).
+
+Run this after every EDT dependent-translation rebuild.
+
+Scope:
+- Only patches translated project (HTTPConnector_translated_project).
+- Never touches source project, dictionaries, or metadata.
+- Idempotent — running twice is safe (second run finds nothing to replace).
+"""
+import re
+from pathlib import Path
+
+PROJ = Path(r"C:/Users/DmitryZhikharev/AppData/Local/1C/1cedtstart/projects/HTTP connector/HTTPConnector_translated_project")
+
+# (russian_source, english_target) — longest-first ordering matters for
+# substring overlaps (e.g., match "повторы будут выполняться для конкретных
+# кодов состояний." before the shorter prefix).
+REPLACEMENTS = [
+    # --- CODE identifiers EDT refused to translate from dict ---
+    ("ПрочитатьZip",           "ReadZip"),
+    ("НоваяCookie",            "NewCookie"),
+    ("ОбработчикиКомандФормы", "FormCommandsEventHandlers"),
+
+    # --- Long multi-line doc blocks (more specific first) ---
+    (
+        "* МодульФункцииВосстановления - Произвольный - определяет модуль, процедура которого будет использована для\r\n//         восстановления значения.",
+        "* ModuleFunctionRestore - Arbitrary - specifies the module whose procedure will be used for\r\n//         value restoration.",
+    ),
+    (
+        "* МодульФункцииВосстановления - Произвольный - определяет модуль, процедура которого будет использована для\r\n//             восстановления значения.",
+        "* ModuleFunctionRestore - Arbitrary - specifies the module whose procedure will be used for\r\n//             value restoration.",
+    ),
+    (
+        "* ДополнительныеПараметрыФункцииВосстановления - Произвольный - определяет дополнительные параметры, которые\r\n//         будут переданы в функцию восстановления значений.",
+        "* AdditionalParametersFunctionRestore - Arbitrary - specifies additional parameters that\r\n//         will be passed to the value restoration function.",
+    ),
+    (
+        "* ДополнительныеПараметрыФункцииВосстановления - Произвольный - определяет дополнительные параметры, которые\r\n//             будут переданы в функцию восстановления значений.",
+        "* AdditionalParametersFunctionRestore - Arbitrary - specifies additional parameters that\r\n//             will be passed to the value restoration function.",
+    ),
+    (
+        "* ИменаСвойствДляОбработкиВосстановления - Массив - определяет массив имен свойств JSON, для которых\r\n//         будет вызвана функция восстановления.",
+        "* NamesPropertiesForProcessingRestore - Array - specifies an array of JSON property names for which\r\n//         the restoration function will be called.",
+    ),
+    (
+        "* ИменаСвойствДляОбработкиВосстановления - Массив - определяет массив имен свойств JSON, для которых\r\n//             будет вызвана функция восстановления.",
+        "* NamesPropertiesForProcessingRestore - Array - specifies an array of JSON property names for which\r\n//             the restoration function will be called.",
+    ),
+    (
+        "* МаксимальнаяВложенность - Число - определяет максимальный уровень вложенности объекта JSON.",
+        "* MaxNesting - Number - specifies the maximum nesting level of the JSON object.",
+    ),
+    (
+        "- Structure, Map - поля формы, которые необходимо отправить в запрос:",
+        "- Structure, Map - form fields to send in the request:",
+    ),
+    (
+        "Data - String, BinaryData - произвольные данные, которые необходимо отправить в запросе.",
+        "Data - String, BinaryData - arbitrary data to send in the request.",
+    ),
+    (
+        "RetryForCodesStatus - Undefined - повторы будут выполняться для кодов состояний >= 500.",
+        "RetryForCodesStatus - Undefined - retries are performed for status codes >= 500.",
+    ),
+    (
+        "- Array - повторы будут выполняться для конкретных кодов состояний.",
+        "- Array - retries are performed for specific status codes.",
+    ),
+    (
+        "Files - См. НовыйОтправляемыйФайл, Array of See NewSentFile - files to send",
+        "Files - See NewSentFile, Array of See NewSentFile - files to send",
+    ),
+
+    # --- Short doc phrases ---
+    ("Возвращаемое значение:",           "Returns:"),
+    ("Возвращает значение:",             "Returns:"),
+    ("Произвольный - значение, десериализованное из JSON.",
+                                          "Arbitrary - value deserialized from JSON."),
+    ("указывается только при чтении объектов JSON",
+                                          "specified only when reading JSON objects"),
+    ("значение допустимого для сериализации типа",
+                                          "value of a serializable type"),
+    ("Key - String - имя поля.",         "Key - String - field name."),
+    ("Value - String - значение поля.",  "Value - String - field value."),
+    ("Значение по умолчанию: Неопределено.",
+                                          "Default value: Undefined."),
+    ("- Истина - the value of CACertificatesOS is used.",
+                                          "- True - the value of CACertificatesOS is used."),
+    ("* Метод - String - HTTP request verb name",
+                                          "* Method - String - HTTP request verb name"),
+]
+
+
+def patch_file(path: Path) -> tuple[int, list[str]]:
+    """Apply replacements to one BSL file. Returns (replacement_count, list_of_applied).
+
+    Normalizes line endings to \\n during matching so patterns are EOL-agnostic,
+    then restores the original EOL when writing back.
+    """
+    raw = path.read_bytes()
+    has_bom = raw.startswith(b"\xef\xbb\xbf")
+    body = raw[3:] if has_bom else raw
+
+    text = body.decode("utf-8")
+    # Detect and normalize EOL
+    had_crlf = "\r\n" in text
+    if had_crlf:
+        text = text.replace("\r\n", "\n")
+
+    total = 0
+    applied = []
+    for src, dst in REPLACEMENTS:
+        # Normalize replacement patterns too
+        src_n = src.replace("\r\n", "\n")
+        dst_n = dst.replace("\r\n", "\n")
+        if src_n not in text:
+            continue
+        n = text.count(src_n)
+        text = text.replace(src_n, dst_n)
+        total += n
+        short = src_n[:60].replace("\n", " | ")
+        applied.append(f"  x{n}: {short}{'...' if len(src_n) > 60 else ''}")
+
+    if total == 0:
+        return 0, []
+
+    # Restore CRLF if original had it
+    if had_crlf:
+        text = text.replace("\n", "\r\n")
+
+    new_raw = text.encode("utf-8")
+    if has_bom:
+        new_raw = b"\xef\xbb\xbf" + new_raw
+    path.write_bytes(new_raw)
+    return total, applied
+
+
+def main():
+    import sys
+    # Force UTF-8 output for non-ASCII identifiers in console (Windows cp1251 default).
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
+    # Translated project contains BOTH the EN-named modules (translation output)
+    # AND RU-named copies (synced from source). Patch only the EN-named ones —
+    # i.e., files whose path has no Cyrillic components.
+    CYR = re.compile(r"[А-Яа-яЁё]")
+    bsl_files = [f for f in PROJ.rglob("*.bsl") if not CYR.search(str(f.relative_to(PROJ)))]
+    print(f"scanning {len(bsl_files)} English-path BSL files in {PROJ}\n")
+
+    grand_total = 0
+    for f in bsl_files:
+        count, applied = patch_file(f)
+        if count:
+            rel = f.relative_to(PROJ)
+            print(f"{rel} - {count} replacement(s):")
+            for line in applied:
+                print(line)
+            grand_total += count
+
+    print(f"\nTOTAL: {grand_total} replacement(s)")
+
+
+if __name__ == "__main__":
+    main()
