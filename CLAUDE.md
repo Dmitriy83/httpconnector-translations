@@ -280,6 +280,20 @@ Even with correct dictionaries and sub-field keys, some identifiers or phrases r
 
 **`postbuild_patch.py`** is the pragmatic cover: it scans translated-project BSL files (English-path-only) and applies a table of literal Russian → English substitutions. Idempotent, deterministic, must be re-run after each EDT rebuild.
 
+### EDT platform dictionary has wrong English aliases for some built-ins
+
+For some 1C platform built-in functions, EDT's internal platform-context dictionary maps the Russian name to a DIFFERENT English identifier than the platform's actual English alias. Observed case:
+
+| Russian | EDT maps to (wrong) | Actual platform English name |
+|---------|---------------------|------------------------------|
+| `СтрНачинаетсяС` | `StrStartsWith` | `StrStartWith` (no "s" in "Start") |
+
+Compile-time validation passes (EDT thinks its mapping is correct), but at **runtime** the wrong form fails with *"Procedure or function with the specified name is not defined"*. Note: `СтрЗаканчиваетсяНа` → `StrEndsWith` IS correct (with "s") — don't let the pattern mislead you.
+
+Fix: override the platform mapping in the user dict — add `СтрНачинаетсяС=StrStartWith` to `common-camelcase_<lang>.dict`. User-level dicts (storage priority ~3) override the platform context (priority 7). See `fix_str_builtins.py`.
+
+Also caught by `postbuild_patch.py` as a fallback (matches `StrStartsWith(` / `СтрНачинаетсяС(` and rewrites to the correct form). When tests surface more "not defined" errors, verify the actual English name in 1C platform and extend the list; don't blindly transform by pattern.
+
 ## Translation workflow for a new project
 
 1. Import source project and create empty dependent translation project in EDT. EDT auto-generates `.lstr` / `.trans` / `.dict` files with source-language (Russian) placeholder values.

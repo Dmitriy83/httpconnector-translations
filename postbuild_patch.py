@@ -22,6 +22,16 @@ PROJ = Path(r"C:/Users/DmitryZhikharev/AppData/Local/1C/1cedtstart/projects/HTTP
 # substring overlaps (e.g., match "повторы будут выполняться для конкретных
 # кодов состояний." before the shorter prefix).
 REPLACEMENTS = [
+    # --- EDT platform dictionary has wrong English alias for СтрНачинаетсяС ---
+    # EDT maps it to StrStartsWith but the actual platform English identifier
+    # is StrStartWith (no "s" in "Start"). StrEndsWith is OK — leave alone.
+    # At runtime the wrong form fails with
+    # "Procedure or function with the specified name is not defined".
+    # Match only call sites (with "(") — leaves comments intact.
+    ("StrStartsWith(",  "StrStartWith("),
+    # Also catch the Russian form (if earlier patcher run or dict change left it)
+    ("СтрНачинаетсяС(", "StrStartWith("),
+
     # --- CODE identifiers EDT refused to translate from dict ---
     ("ПрочитатьZip",           "ReadZip"),
     ("НоваяCookie",            "NewCookie"),
