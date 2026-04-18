@@ -10,4 +10,7 @@ untranslated.txt
 camelcase_cyr_tokens.txt
 camelcase_missing.txt
 apply_camelcase.out
+check_translated.out
+check_translated2.out
+missing_keys.out
 untr/
