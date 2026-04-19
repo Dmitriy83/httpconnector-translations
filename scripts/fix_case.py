@@ -19,6 +19,7 @@ FIXES = {
     "URI":      "URI",
     "Version":  "Version",
     "Web":      "Web",
+    "SHA256":   "SHA256",   # platform enum HashFunction.SHA256 (not .sha256)
 }
 
 

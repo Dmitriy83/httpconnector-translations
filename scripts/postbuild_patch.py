@@ -78,6 +78,35 @@ REPLACEMENTS = [
     ("НоваяCookie",            "NewCookie"),
     ("ОбработчикиКомандФормы", "FormCommandsEventHandlers"),
 
+    # --- SearchDirection enum value — EDT maps СНачала→FromBegin, actual is FromBeginning ---
+    (".FromBegin)",  ".FromBeginning)"),
+    (".FromBegin,",  ".FromBeginning,"),
+    (".FromBegin ",  ".FromBeginning "),
+
+    # --- HashFunction.SHA256 — dict had SHA256=sha256 (lowercase), actual enum is SHA256 ---
+    (".sha256",              ".SHA256"),
+    # Authorization header value: "AWS4-HMAC-SHA256" (uppercase SHA256 required)
+    ('"AWS4-HMAC-sha256',    '"AWS4-HMAC-SHA256'),
+
+    # --- Struct-key literals wrongly restored to Russian by phase 2 (identifier-like
+    # pattern with commas wasn't recognized). Force them back to English so module
+    # code accessing via .Name, .Value, etc. works. ---
+    ('"Наименование,Значение"',         '"Name,Value"'),
+    ('"Наименование, Значение"',        '"Name, Value"'),
+    ('"Пользователь, Пароль"',          '"User, Password"'),
+    ('"Пользователь, Пароль, Тип"',     '"User, Password, Type"'),
+    ('"Имя,Данные,ИмяФайла"',           '"Name,Data,NameFile"'),
+    ('"Файлы,Данные"',                  '"Files,Data"'),
+
+    # --- Single-word data literals inconsistent with URL restores.
+    # Phase 2 restored "Программист" inside URL literal but left bare "Programmer"
+    # (single-word, identifier-like). Server echoes what client sends → test assertion
+    # expecting "Programmer" fails. Restore the assertion side to Russian for
+    # consistency. Similarly for "Hello, World" / "Привет, Мир". ---
+    ('"Programmer"',      '"Программист"'),
+    ('"Hello, World"',    '"Привет, Мир"'),
+    ('"Hello, World!"',   '"Привет, Мир!"'),
+
     # --- Long multi-line doc blocks (more specific first) ---
     (
         "* МодульФункцииВосстановления - Произвольный - определяет модуль, процедура которого будет использована для\r\n//         восстановления значения.",
@@ -269,6 +298,23 @@ def main():
     bsl_files = [f for f in PROJ.rglob("*.bsl") if not CYR.search(str(f.relative_to(PROJ)))]
     print(f"scanning {len(bsl_files)} English-path BSL files in {PROJ}\n")
 
+    # Phase 1: restore Russian string literals that EDT mistranslated (test data).
+    # Runs FIRST because phase-2 explicit replacements need to OVERRIDE restored
+    # values for struct-key literals (e.g. "Наименование,Значение" → "Name,Value").
+    # If we ran phase-2 last, phase-1 restore would ping-pong the struct keys back
+    # to Russian even after phase-2 forces them English.
+    print("phase 1 — literal restoration from RU source (line-aligned):")
+    total_restored = 0
+    for ru_path, en_path in LITERAL_RESTORE_PAIRS:
+        n = restore_literals(ru_path, en_path)
+        if n:
+            print(f"  {en_path.relative_to(PROJ)} - restored {n} literal(s)")
+            total_restored += n
+    print(f"TOTAL phase-1 restorations: {total_restored}\n")
+
+    # Phase 2: explicit identifier/literal substitutions (run AFTER restore so
+    # hard-coded pairs win over auto-restore for struct-key literals).
+    print("phase 2 — explicit substitutions:")
     grand_total = 0
     for f in bsl_files:
         count, applied = patch_file(f)
@@ -279,17 +325,7 @@ def main():
                 print(line)
             grand_total += count
 
-    print(f"\nTOTAL phase-1 replacements: {grand_total}")
-
-    # Phase 2: restore Russian string literals that EDT mistranslated (test data).
-    print("\nphase 2 — literal restoration (line-aligned against RU source):")
-    total_restored = 0
-    for ru_path, en_path in LITERAL_RESTORE_PAIRS:
-        n = restore_literals(ru_path, en_path)
-        if n:
-            print(f"  {en_path.relative_to(PROJ)} - restored {n} literal(s)")
-            total_restored += n
-    print(f"\nTOTAL phase-2 restorations: {total_restored}")
+    print(f"\nTOTAL phase-2 replacements: {grand_total}")
 
 
 if __name__ == "__main__":

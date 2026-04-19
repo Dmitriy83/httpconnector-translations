@@ -23,6 +23,10 @@ OVERRIDES = {
 
     # InternetProxy method
     "ИспользоватьАутентификациюОС":  "UseOSAuthentication", # was UseAuthenticationOS
+
+    # SearchDirection enum value — EDT maps СНачала→FromBegin but actual platform
+    # English identifier is FromBeginning. Runtime: Invalid parameter value.
+    "СНачала":                       "FromBeginning",
 }
 
 
