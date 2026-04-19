@@ -55,6 +55,16 @@ REPLACEMENTS = [
     ('CallHTTPMethod(CurrentSession, "Patch",',   'CallHTTPMethod(CurrentSession, "PATCH",'),
     ('CallHTTPMethod(CurrentSession, "Delete",',  'CallHTTPMethod(CurrentSession, "DELETE",'),
     ('CallHTTPMethod(CurrentSession, "Mkcol",',   'CallHTTPMethod(CurrentSession, "MKCOL",'),
+    # HTTP method literals inside OverrideMethod (redirect 302/303 handler) —
+    # camelcase dict case-folded "HEAD"→"Head" and "GET"→"Get". Without this,
+    # after a 302/303 the module sends "Get" as HTTP method → server returns
+    # 400 Bad Request. Affects Test_GetSuccessfulRedirectAbsoluteAddress,
+    # Test_GetLoopedRedirect, Test_InstallCookies, Test_GetListReleasesInSite1.
+    ('Method <> "Head"',        'Method <> "HEAD"'),
+    ('Method = "Get";',         'Method = "GET";'),
+    ('Upper(Method) <> "Head"', 'Upper(Method) <> "HEAD"'),
+    # Default method in NewResponse() placeholder
+    ('Insert("Method", "Get")', 'Insert("Method", "GET")'),
 
     # --- Platform object fields with wrong positional translation ---
     # Tokenizer reverses word order; platform names differ. Fix access sites
