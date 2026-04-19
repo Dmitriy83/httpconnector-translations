@@ -24,9 +24,9 @@ OVERRIDES = {
     # InternetProxy method
     "ИспользоватьАутентификациюОС":  "UseOSAuthentication", # was UseAuthenticationOS
 
-    # SearchDirection enum value — EDT maps СНачала→FromBegin but actual platform
-    # English identifier is FromBeginning. Runtime: Invalid parameter value.
-    "СНачала":                       "FromBeginning",
+    # NOTE: СНачала=FromBegin is actually correct per EDT (verified). An earlier
+    # "Invalid parameter value (parameter number '4')" at StrFind was caused by
+    # StartIndex=0 (StrFind returns 0 when substring not found), not by the enum name.
 }
 
 

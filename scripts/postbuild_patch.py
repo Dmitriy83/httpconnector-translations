@@ -78,10 +78,10 @@ REPLACEMENTS = [
     ("НоваяCookie",            "NewCookie"),
     ("ОбработчикиКомандФормы", "FormCommandsEventHandlers"),
 
-    # --- SearchDirection enum value — EDT maps СНачала→FromBegin, actual is FromBeginning ---
-    (".FromBegin)",  ".FromBeginning)"),
-    (".FromBegin,",  ".FromBeginning,"),
-    (".FromBegin ",  ".FromBeginning "),
+    # --- Revert the wrong FromBeginning fix (EDT's FromBegin is actually correct) ---
+    (".FromBeginning)",  ".FromBegin)"),
+    (".FromBeginning,",  ".FromBegin,"),
+    (".FromBeginning ",  ".FromBegin "),
 
     # --- HashFunction.SHA256 — dict had SHA256=sha256 (lowercase), actual enum is SHA256 ---
     (".sha256",              ".SHA256"),
