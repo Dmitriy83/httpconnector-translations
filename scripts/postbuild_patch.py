@@ -115,11 +115,14 @@ REPLACEMENTS = [
     # Authorization header value: "AWS4-HMAC-SHA256" (uppercase SHA256 required)
     ('"AWS4-HMAC-sha256',    '"AWS4-HMAC-SHA256'),
     # --- Type-code literal compared via Lower(). RU has "aws4-hmac-sha256" (all lower);
-    # camelcase dict tokenizer matched the `aws4` fragment and rewrote the literal to
-    # "AWS4-hmac-sha256", which never equals the lowered authentication type → the
-    # AWS4-branch of PrepareAuthentication never fires and x-amz-content-sha256 stays
-    # empty. Revert to the RU lowercase form. ---
+    # camelcase dict tokenizer matches `aws4` → AWS4 and/or `sha256` → SHA256 depending
+    # on dict entry ordering, producing one of several mixed-case variants. All of them
+    # break the Lower()==literal comparison → AWS4-branch of PrepareAuthentication never
+    # fires and x-amz-content-sha256 header stays empty. Cover every variant observed. ---
     ('"AWS4-hmac-sha256"',   '"aws4-hmac-sha256"'),
+    ('"AWS4-hmac-SHA256"',   '"aws4-hmac-sha256"'),
+    ('"aws4-hmac-SHA256"',   '"aws4-hmac-sha256"'),
+    ('"AWS4-HMAC-sha256"',   '"aws4-hmac-sha256"'),
 
     # --- Struct-key / list-of-names literals — safety net for the RESTORE_EXCEPTIONS
     # set. Normal flow: EDT translates them correctly, phase-1 leaves them alone
