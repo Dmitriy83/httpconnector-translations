@@ -3,16 +3,7 @@
 __pycache__/
 *.pyc
 
-# regenerable analysis outputs
-estimate.out
-glossary.txt
-untranslated.txt
-camelcase_cyr_tokens.txt
-camelcase_missing.txt
-apply_camelcase.out
-check_translated.out
-check_translated2.out
-missing_keys.out
-str_ids.out
-mistranslated_literals.out
+# Regenerable diagnostic outputs from scripts/
+*.out
+*.txt
 untr/
