@@ -42,6 +42,37 @@ REPLACEMENTS = [
     # Also catch the Russian form (if earlier patcher run or dict change left it)
     ("СтрНачинаетсяС(", "StrStartWith("),
 
+    # --- HTTP method literals translated by camelcase dict ---
+    # EDT's camelcase dict translates "POST" → "Post", "GET" → "Get" inside
+    # string literals (via token case-folding). These are HTTP method strings
+    # passed to HTTPConnection.CallHTTPMethod — must stay uppercase per HTTP
+    # spec (server returns 400 otherwise). Match the specific call-site pattern.
+    ('CallHTTPMethod(CurrentSession, "Get",',     'CallHTTPMethod(CurrentSession, "GET",'),
+    ('CallHTTPMethod(CurrentSession, "Options",', 'CallHTTPMethod(CurrentSession, "OPTIONS",'),
+    ('CallHTTPMethod(CurrentSession, "Head",',    'CallHTTPMethod(CurrentSession, "HEAD",'),
+    ('CallHTTPMethod(CurrentSession, "Post",',    'CallHTTPMethod(CurrentSession, "POST",'),
+    ('CallHTTPMethod(CurrentSession, "Put",',     'CallHTTPMethod(CurrentSession, "PUT",'),
+    ('CallHTTPMethod(CurrentSession, "Patch",',   'CallHTTPMethod(CurrentSession, "PATCH",'),
+    ('CallHTTPMethod(CurrentSession, "Delete",',  'CallHTTPMethod(CurrentSession, "DELETE",'),
+    ('CallHTTPMethod(CurrentSession, "Mkcol",',   'CallHTTPMethod(CurrentSession, "MKCOL",'),
+
+    # --- Platform object fields with wrong positional translation ---
+    # Tokenizer reverses word order; platform names differ. Fix access sites
+    # (.Name) and literals ("Name"). If dict is fixed via fix_platform_fields.py,
+    # these are no-ops on next rebuild — they remain as safety net.
+    (".CodeStatus",              ".StatusCode"),
+    ('"CodeStatus"',             '"StatusCode"'),
+    (".BreakLines",              ".NewLines"),            # JSONWriterSettings
+    ('"BreakLines"',             '"NewLines"'),
+    (".SymbolsIndent",           ".PaddingSymbols"),      # JSONWriterSettings
+    ('"SymbolsIndent"',          '"PaddingSymbols"'),
+    (".EscapeSeparatorsLines",   ".EscapeLineTerminators"),
+    ('"EscapeSeparatorsLines"',  '"EscapeLineTerminators"'),
+    (".AddressResource",         ".ResourceAddress"),     # HTTPRequest
+    ('"AddressResource"',        '"ResourceAddress"'),
+    (".UseAuthenticationOS",     ".UseOSAuthentication"), # InternetProxy
+    ('"UseAuthenticationOS"',    '"UseOSAuthentication"'),
+
     # --- CODE identifiers EDT refused to translate from dict ---
     ("ПрочитатьZip",           "ReadZip"),
     ("НоваяCookie",            "NewCookie"),
