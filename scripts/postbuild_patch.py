@@ -87,6 +87,12 @@ REPLACEMENTS = [
     (".sha256",              ".SHA256"),
     # Authorization header value: "AWS4-HMAC-SHA256" (uppercase SHA256 required)
     ('"AWS4-HMAC-sha256',    '"AWS4-HMAC-SHA256'),
+    # --- Type-code literal compared via Lower(). RU has "aws4-hmac-sha256" (all lower);
+    # camelcase dict tokenizer matched the `aws4` fragment and rewrote the literal to
+    # "AWS4-hmac-sha256", which never equals the lowered authentication type → the
+    # AWS4-branch of PrepareAuthentication never fires and x-amz-content-sha256 stays
+    # empty. Revert to the RU lowercase form. ---
+    ('"AWS4-hmac-sha256"',   '"aws4-hmac-sha256"'),
 
     # --- Struct-key literals wrongly restored to Russian by phase 2 (identifier-like
     # pattern with commas wasn't recognized). Force them back to English so module
@@ -97,6 +103,10 @@ REPLACEMENTS = [
     ('"Пользователь, Пароль, Тип"',     '"User, Password, Type"'),
     ('"Имя,Данные,ИмяФайла"',           '"Name,Data,NameFile"'),
     ('"Файлы,Данные"',                  '"Files,Data"'),
+    # NamesPropertiesForProcessingRestore drives restore-callback iteration — must
+    # match the JSON/TypesProperties keys (which are English). Phase 1 reverted
+    # this Russian literal; force it back to English. ---
+    ('"УникальныйИдентификатор,ДвоичныеДанные"', '"UUID,BinaryData"'),
 
     # --- Single-word data literals inconsistent with URL restores.
     # Phase 2 restored "Программист" inside URL literal but left bare "Programmer"
