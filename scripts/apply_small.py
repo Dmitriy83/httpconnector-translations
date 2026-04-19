@@ -8,7 +8,7 @@ from pathlib import Path
 import importlib.util
 
 ROOT = Path(r"C:/git/HTTPConnector/dictionaries_en/src")
-SRC = Path(r"C:/git/1c-translations-with-model/translations_small.py")
+SRC = Path(r"C:/git/1c-translations-with-model/scripts/translations_small.py")
 
 
 def load_tr():

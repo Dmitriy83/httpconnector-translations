@@ -195,7 +195,7 @@ Both language files must have identical key sets. If a target-language file is m
 
 ## Tooling — translation pipeline
 
-Repository includes Python scripts that automate a multi-phase translation of a new dependent translation project. They were developed against HTTPConnector/dictionaries_en but are generic — retarget the `PROJ`/path constants at the top of each script to apply to another project.
+All pipeline scripts live in [scripts/](scripts/). Run them as `python scripts/<name>.py` from the repo root. They were developed against HTTPConnector/dictionaries_en but are generic — retarget the `PROJ`/path constants at the top of each script to apply to another project.
 
 See [POSTBUILD_PATCHER.md](POSTBUILD_PATCHER.md) for the standalone deep-dive on the post-build step and why it's necessary.
 
