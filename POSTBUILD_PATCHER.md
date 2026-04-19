@@ -1,139 +1,139 @@
-# Post-build patcher — why it exists
+# Post-build patcher — зачем он нужен
 
-`postbuild_patch.py` is a Python script that rewrites parts of the translated project's BSL files after EDT's dependent-translation build. It exists because EDT's LanguageTool has several behaviors that **cannot be fixed by dictionary edits alone**.
+`postbuild_patch.py` — Python-скрипт, который правит BSL-файлы переведённого проекта **после** сборки зависимого перевода в EDT. Он существует потому что у EDT LanguageTool есть несколько особенностей, которые **нельзя починить одним только словарём**.
 
-This document explains the specific failure modes that forced a post-process step and describes the logic of each mitigation.
+Документ объясняет конкретные режимы поломок, из-за которых пришлось добавить пост-обработку, и описывает логику каждой мит-ции.
 
 ## TL;DR
 
-EDT's translation applies a per-word dictionary to **every occurrence of a token**, including:
+Перевод в EDT применяет пословарный лукап к **каждому вхождению токена**, включая:
 
-- Identifier renames (desired)
-- Region names (desired)
-- **String literal contents** (not desired)
-- **String literals that need to stay in the source language** (HTTP verbs, platform format directives, byte-level test data, etc.)
+- переименование идентификаторов (нужно);
+- имена регионов (нужно);
+- **содержимое строковых литералов** (не нужно);
+- **строковые литералы, которые должны остаться в исходном языке** (HTTP-глаголы, format-директивы платформы, byte-level тестовые данные и т.п.).
 
-Because the dictionary is **context-blind**, a single entry governs both "translate identifier `Post` to `Post`" and "translate literal `"POST"` to `"Post"`" — these have opposite requirements. `postbuild_patch.py` fixes the fallout in the translated output where the dict can't.
+Словарь **не видит контекста**: одна и та же запись управляет и "переведи идентификатор `Post` как `Post`", и "переведи литерал `"POST"` как `"Post"`" — требования противоположные. `postbuild_patch.py` чинит последствия в результате перевода там, где словарь бессилен.
 
-## Failure mode #1 — EDT platform dictionary has wrong English aliases for some built-ins
+## Режим #1 — у EDT неверный английский алиас для некоторых платформенных встроенных функций
 
-### What goes wrong
+### Что ломается
 
-EDT ships a built-in "platform context" dictionary mapping Russian platform identifiers to their English aliases. For **some** built-ins this mapping is incorrect:
+EDT содержит встроенный словарь "platform context", который мапит русские имена платформенных идентификаторов на английские алиасы. Для **некоторых** встроенных он ошибочен:
 
-| Russian | EDT maps to (wrong) | Actual 1C platform English name |
-|---------|---------------------|-----------------------------------|
-| `СтрНачинаетсяС` | `StrStartsWith` | `StrStartWith` (no "s" in "Start") |
+| Русский | EDT мапит (неверно) | Реальное имя в 1С |
+|---------|---------------------|-------------------|
+| `СтрНачинаетсяС` | `StrStartsWith` | `StrStartWith` (без "s" в "Start") |
 
-EDT's compile-time validation accepts the wrong name (it trusts its own mapping). At **runtime** the wrong form fails with:
+Compile-time-проверка EDT принимает ошибочное имя (доверяет своему маппингу). В **runtime** неверная форма падает с:
 
 ```
 Procedure or function with the specified name is not defined (StrStartsWith)
 ```
 
-Note: `СтрЗаканчиваетсяНа` → `StrEndsWith` IS correct (with "s"). The pattern is asymmetric — don't blindly transform both.
+Заметка: `СтрЗаканчиваетсяНа` → `StrEndsWith` ПРАВИЛЬНО (с "s"). Паттерн несимметричный — не применяйте преобразование "убрать s" к обоим случаям вслепую.
 
-### Why the dict can't fix it alone
+### Почему один словарь это не чинит
 
-We added `СтрНачинаетсяС=StrStartWith` to `common-camelcase_en.dict`. User-dict has higher priority than platform context, so future EDT builds use the correct name. **That's the permanent fix.**
+Мы добавили `СтрНачинаетсяС=StrStartWith` в `common-camelcase_en.dict`. Пользовательский словарь приоритетнее platform context, поэтому будущие сборки EDT используют правильное имя. **Это и есть основной фикс.**
 
-But:
-- Intermediate builds (before the user-dict entry is picked up) produce wrong output.
-- If EDT regenerates the dict file (rare but possible), the override may be lost.
-- If developer adds new code using `СтрНачинаетсяС` without regenerating the dict, EDT's platform default kicks in again.
+Но:
+- Промежуточные сборки (до подхвата entry) дают неверный вывод.
+- Если EDT регенерит файл словаря (редко, но возможно), override может пропасть.
+- Если разработчик добавит новый код с `СтрНачинаетсяС` без регенерации словаря, снова подхватится дефолтный platform.
 
-So the patcher keeps a safety net: rewrite `StrStartsWith(` → `StrStartWith(` at call-sites. Matched with trailing `(` so comments/identifiers aren't touched.
+Поэтому patcher держит страховку: заменяет `StrStartsWith(` → `StrStartWith(` на call-сайтах. Матчится с хвостовым `(` чтобы не трогать комментарии и другие случаи.
 
-## Failure mode #2 — camelcase dict translates string literal contents
+## Режим #2 — camelcase-словарь переводит содержимое строковых литералов
 
-### What goes wrong
+### Что ломается
 
-EDT's camelcase dict is used to translate **BSL identifiers** (CamelCase composites). But EDT also **tokenizes string literal contents** against the same dict and replaces matched tokens.
+Camelcase-словарь EDT предназначен для перевода **BSL-идентификаторов** (CamelCase-композитов). Но EDT также **токенизирует содержимое строковых литералов** тем же словарём и заменяет совпавшие токены.
 
-Example — Russian test source:
+Пример — русский тест:
 
 ```bsl
 Ключ = ПолучитьДвоичныеДанныеИзСтроки("Секретный ключ", КодировкаТекста.UTF8, Ложь);
 Данные = ПолучитьДвоичныеДанныеИзСтроки("Какие-то данные", КодировкаТекста.UTF8, Ложь);
 ```
 
-Dict has tokens like `Секретный=Secret`, `ключ=key`, `Какие=Which`, `то=then`, `данные=data`. After EDT translation:
+В словаре есть токены типа `Секретный=Secret`, `ключ=key`, `Какие=Which`, `то=then`, `данные=data`. После перевода EDT:
 
 ```bsl
 Var_Key = GetBinaryDataFromString("Secret key", TextEncoding.utf8, False);
 Data = GetBinaryDataFromString("Which-then data", TextEncoding.utf8, False);
 ```
 
-For tests that compare bytes (HMAC, hash, URL-encoded content), this **changes the bytes** passed to the hash function and breaks assertions:
+Для тестов, которые сравнивают **байты** (HMAC, хеш, URL-encoded содержимое), это **меняет байты**, подаваемые в хеш-функцию, и ломает assertion:
 
 ```
 <80 6D 4A D3 ...> not equals <1B 1E C4 16 ...>
 ```
 
-### Why the dict can't fix it alone
+### Почему один словарь это не чинит
 
-The problematic tokens (`Секретный`, `ключ`, `данные`, etc.) are legitimate parts of **real identifiers** (`СекретныйКлюч=SecretKey`, `ДвоичныеДанные=BinaryData`, etc.). Removing token-level entries breaks identifier translation for any composite that doesn't have an explicit full-identifier entry. In HTTPConnector's dict of ~1100 entries, the vast majority rely on the tokenization fallback.
+Проблемные токены (`Секретный`, `ключ`, `данные` и др.) — легитимные части **настоящих идентификаторов** (`СекретныйКлюч=SecretKey`, `ДвоичныеДанные=BinaryData` и т.д.). Удаление токен-уровневых записей ломает перевод идентификаторов для любого композита, у которого нет явного full-identifier entry. В словаре HTTPConnector из ~1100 записей подавляющее большинство зависят от fallback-токенизации.
 
-EDT provides no way to limit a dictionary's scope to identifiers only.
+EDT не даёт ограничить область словаря только идентификаторами.
 
-### How the patcher handles it
+### Как patcher это чинит
 
-`restore_literals()` in phase 2 of `postbuild_patch.py`:
+`restore_literals()` в phase 2 скрипта `postbuild_patch.py`:
 
-1. Line-aligned diff of translated file against the RU source.
-2. For each line with a string literal that differs between RU and EN versions, compare:
-   - If RU literal has no Cyrillic → leave translated (was already English, nothing to restore)
-   - If RU literal is an "identifier-like" literal (pure `[A-Za-z0-9_]+`, optionally `,` + `\s`) → leave translated — these are usually procedure names for `Execute()` or struct key lists that must match consistently
-   - Otherwise → revert EN literal to RU original
+1. Построчный diff переведённого файла с русским исходником.
+2. Для каждой строки со строковым литералом, отличающимся в RU и EN версиях:
+   - если в RU-литерале нет кириллицы → оставить переведённым (был английским изначально, нечего восстанавливать);
+   - если RU-литерал "identifier-like" (чистый `[A-Za-z0-9_]+`, опционально `,` + `\s`) → оставить переведённым — это обычно имена процедур для `Execute()` или списки ключей структур, которые должны совпадать во всех местах использования;
+   - иначе → вернуть EN-литерал к русскому оригиналу.
 
-Configure `LITERAL_RESTORE_PAIRS` with `(ru_path, en_path)` tuples for each module that has test-data literals.
+Настройка: `LITERAL_RESTORE_PAIRS` — список `(ru_path, en_path)` tuples для каждого модуля, где есть тестовые данные в литералах.
 
-## Failure mode #3 — HTTP method literals case-folded
+## Режим #3 — HTTP-глаголы в литералах case-folding'ятся
 
-### What goes wrong
+### Что ломается
 
-Same tokenization mechanism as failure mode #2, but the affected literals are **identifier-like** so the literal-restore heuristic doesn't catch them.
+Тот же механизм токенизации что в режиме #2, но задетые литералы — **identifier-like**, поэтому эвристика literal-restore их не ловит.
 
-RU source:
+Русский исходник:
 
 ```bsl
 Возврат ВызватьHTTPМетод(ТекущаяСессия, "POST", URL, Параметры);
 ```
 
-Dict has `Post=Post` (PascalCase — correct for BSL function name). EDT case-insensitively matches the literal `"POST"` against token `Post` and outputs the dict value `Post`:
+В словаре есть `Post=Post` (PascalCase — правильно для BSL-имени функции). EDT case-insensitive совпадает литерал `"POST"` с токеном `Post` и выдаёт значение словаря `Post`:
 
 ```bsl
 Return CallHTTPMethod(CurrentSession, "Post", URL, Parameters);
 ```
 
-`"Post"` is then sent as the HTTP method verb. HTTP servers are case-sensitive per spec (RFC 7230); nginx returns `400 Bad Request`.
+`"Post"` передаётся как HTTP-метод. HTTP-серверы case-sensitive по спецификации (RFC 7230); nginx возвращает `400 Bad Request`.
 
-### Why the dict can't fix it alone
+### Почему один словарь это не чинит
 
-Setting `Post=POST` would make BSL identifier `Post` translate to `POST`, producing ugly function declarations (`Function POST(...)`). Setting `Post=Post` keeps function names pretty but breaks literal `"POST"`.
+Поставить `Post=POST` — BSL-идентификатор `Post` будет переводиться в `POST`, давая уродливые объявления функций (`Function POST(...)`). Оставить `Post=Post` — ломается литерал `"POST"`.
 
-Same fundamental problem as failure mode #2 — dict cannot distinguish identifier vs string-literal context.
+Та же фундаментальная проблема что и в режиме #2 — словарь не может различить контекст identifier vs string-literal.
 
-### How the patcher handles it
+### Как patcher это чинит
 
-Explicit context-matched replacements scoped to `CallHTTPMethod(...)` sites:
+Явные контекстно-привязанные замены, скопированные по call-сайтам `CallHTTPMethod(...)`:
 
 ```python
 ('CallHTTPMethod(CurrentSession, "Get",',  'CallHTTPMethod(CurrentSession, "GET",'),
 ('CallHTTPMethod(CurrentSession, "Post",', 'CallHTTPMethod(CurrentSession, "POST",'),
-# ...for each HTTP verb
+# ...для каждого HTTP-глагола
 ```
 
-The preceding `CallHTTPMethod(CurrentSession, ` anchor narrows the match — arbitrary `"Post"` elsewhere in the file stays untouched.
+Префикс `CallHTTPMethod(CurrentSession, ` сужает матч — произвольные `"Post"` в других местах файла не трогаются.
 
-## Failure mode #4 — platform object fields whose English name isn't the positional token-translation
+## Режим #4 — поля платформенных объектов, у которых английское имя не совпадает с позиционным переводом токенов
 
-### What goes wrong
+### Что ломается
 
-`common-camelcase_en.dict` builds composite translations by concatenating token translations in the **same order** as the Russian. Many platform object property/method names don't follow this word order:
+`common-camelcase_en.dict` строит перевод композитов конкатенацией переводов токенов **в том же порядке** что русские. У многих свойств/методов платформенных объектов порядок слов другой:
 
-| Russian | Positional translation (wrong) | Actual platform English name |
-|---------|--------------------------------|------------------------------|
+| Русский | Позиционный перевод (неверно) | Реальное имя в платформе |
+|---------|-------------------------------|---------------------------|
 | `КодСостояния` | `CodeStatus` | `StatusCode` |
 | `ПереносСтрок` | `BreakLines` | `NewLines` |
 | `СимволыОтступа` | `SymbolsIndent` | `PaddingSymbols` |
@@ -141,58 +141,57 @@ The preceding `CallHTTPMethod(CurrentSession, ` anchor narrows the match — arb
 | `АдресРесурса` | `AddressResource` | `ResourceAddress` |
 | `ИспользоватьАутентификациюОС` | `UseAuthenticationOS` | `UseOSAuthentication` |
 
-When the translated module accesses a platform object field with the wrong name, runtime throws:
+Когда переведённый модуль обращается к полю платформенного объекта по неверному имени, runtime кидает:
 
 ```
 Object field not found (CodeStatus)
 ```
 
-### Why the dict can't fix it alone
+### Почему один словарь это не чинит
 
-It CAN fix it — by adding an explicit full-identifier override (`КодСостояния=StatusCode`). We do that (`fix_platform_fields.py`). But:
+В принципе, МОЖЕТ — явным full-identifier override (`КодСостояния=StatusCode`). Мы так и делаем (`fix_platform_fields.py`). Но:
 
-- We only discover the mismatches when a test fails with "Object field not found". It's reactive, not exhaustive.
-- If developer adds new code using a newly-encountered composite like `ОчередьОбработки` (hypothetical `ProcessingQueue` but EDT translates to `QueueProcessing`), it breaks silently until tested.
+- Мы обнаруживаем несовпадения только когда тест падает с "Object field not found". Реактивно, не исчерпывающе.
+- Если разработчик добавит новый код с не-встречавшимся ранее композитом типа `ОчередьОбработки` (гипотетический `ProcessingQueue`, но EDT переведёт как `QueueProcessing`), это поломается молча до первого тестирования.
 
-So the patcher carries a parallel list of access-site rewrites (`.CodeStatus` → `.StatusCode`, `"CodeStatus"` → `"StatusCode"`, etc.) as an independent safety net. The dict fix is primary; the patcher is belt-and-suspenders.
+Поэтому patcher держит параллельный список замен на access-сайтах (`.CodeStatus` → `.StatusCode`, `"CodeStatus"` → `"StatusCode"` и т.д.) как независимую страховку. Фикс в словаре — основной; patcher — подстраховка.
 
-## Failure mode #5 — EDT dict generator skips sub-field keys for some methods
+## Режим #5 — генератор `.trans`-словаря EDT пропускает ключи sub-fields для некоторых методов
 
-### What goes wrong
+### Что ломается
 
-For some methods, EDT's `.trans` dictionary generator produces only `Method.X.Description` and `Method.X.Return.Description` keys, skipping per-field keys (`Method.X.Return.<FieldName>.Description`) that it generates for structurally-similar methods.
+Для некоторых методов генератор `.trans`-словаря EDT создаёт только `Method.X.Description` и `Method.X.Return.Description` ключи, пропуская per-field ключи (`Method.X.Return.<FieldName>.Description`), которые он генерит для структурно аналогичных методов.
 
-Result: large blocks of Russian text remain in the translated module's doc comments for the affected method.
+Итог: большие блоки русского текста остаются в doc-комментариях переведённого модуля для задетых методов.
 
-### Why the dict can't fix it alone
+### Почему один словарь это не чинит
 
-Missing keys can be added manually to `.trans` and EDT does honor them on rebuild (we verified this). Primary fix is a RU-source edit that unblocks the generator (e.g., renaming a duplicate `// Возвращаемое значение:` line in a nested callback) plus manually-added sub-field keys.
+Недостающие ключи можно добавить вручную в `.trans`, и EDT их учитывает при пересборке (проверили). Основной фикс — правка RU-исходника, разблокирующая генератор (например, переименовать дубликат `// Возвращаемое значение:` во вложенном callback'е) плюс вручную добавленные sub-field ключи.
 
-The patcher doesn't currently handle this class — it's addressed at dict generation time (see `add_newparams_keys.py`, `fix_newparams_finale.py`). Listed here for completeness.
+Patcher на этот класс сейчас не нацелен — проблема решается на этапе генерации словаря (см. `add_newparams_keys.py`, `fix_newparams_finale.py`). В документе перечислен для полноты.
 
-## Why two phases?
+## Почему две фазы?
 
-`postbuild_patch.py` splits work into two passes:
+`postbuild_patch.py` делит работу на две фазы:
 
-- **Phase 1 — identifier/literal substitutions.** Plain string-pair replacements. Deterministic, fast, idempotent. Handles failure modes #1, #3, #4.
+- **Фаза 1 — замены идентификаторов/литералов.** Простые замены пар строк. Детерминированные, быстрые, идемпотентные. Покрывают режимы #1, #3, #4.
+- **Фаза 2 — восстановление литералов из RU-исходника.** Для модулей, где RU-исходник — авторитет по содержимому строковых литералов (в первую очередь тестовые модули), делает построчный diff и возвращает non-identifier-like русские литералы на место. Покрывает режим #2.
 
-- **Phase 2 — literal restoration from RU source.** For modules whose RU source is an authority for string-literal content (test modules, primarily), do a line-aligned diff and revert non-identifier-like Russian literals. Handles failure mode #2.
+Фазы независимы и композируются по каждому файлу.
 
-The two phases are independent and composable per-file.
+## Когда расширять
 
-## When to extend
+- **Новая runtime-ошибка `not defined` для платформенной встроенной функции** — добавить в список пар режима #1 И в overrides `fix_str_builtins.py`.
+- **Новый падающий тест на byte-уровне** — зарегистрировать пару `(ru_path, en_path)` модуля в `LITERAL_RESTORE_PAIRS`.
+- **Новая ошибка `Object field not found`** — подтвердить реальное имя свойства через `get_platform_documentation` MCP-tool или 1C-доки, добавить в overrides `fix_platform_fields.py` И в phase-1 список пар.
+- **Новый тест падает с `400 Bad Request` от сервера на HTTP-вызове** — вероятно, ещё один HTTP-глагол / протокольный токен покоцан case-fold'ом; добавить контекстно-привязанную пару в HTTP-verb-блок.
 
-- **New runtime `not defined` error for a platform built-in** — add to failure mode #1's pair list AND to `fix_str_builtins.py` overrides.
-- **New test assertion failing on byte comparison** — register the module's `(ru_path, en_path)` pair in `LITERAL_RESTORE_PAIRS`.
-- **New `Object field not found` error** — confirm the actual platform English name, add to `fix_platform_fields.py` overrides AND to phase-1 pair list.
-- **New test failing with server `400 Bad Request` on HTTP call** — likely another HTTP verb / protocol token mangled by case-folding; add a context-anchored pair to the HTTP-verb block.
+Каждое расширение идёт по одному паттерну: выяснить правильную английскую форму (через `get_platform_documentation` или 1C-доки), добавить явный override в словарь где можно, и safety-net замену в patcher.
 
-Each extension follows the same pattern: verify the correct English form (via `get_platform_documentation` or 1C docs), add an explicit dict override where possible, and a patcher safety-net replacement.
+## Применение к новому проекту
 
-## Guidance for applying to a new project
-
-1. Clone `postbuild_patch.py`.
-2. Retarget `PROJ` and `LITERAL_RESTORE_PAIRS` to the new project's paths.
-3. Start with the HTTP-verb block and platform-field block — they're project-independent in their failure pattern (any 1C configuration using HTTP will need them).
-4. Run after each EDT rebuild. Re-run when new runtime errors surface; add pairs as they appear.
-5. Keep the patcher idempotent — every replacement should be a no-op on the second run.
+1. Скопировать `postbuild_patch.py`.
+2. Перенацелить `PROJ` и `LITERAL_RESTORE_PAIRS` на пути нового проекта.
+3. Начать с HTTP-verb-блока и platform-field-блока — по паттерну поломки они не зависят от проекта (любая 1С-конфигурация с HTTP будет их требовать).
+4. Запускать после каждой пересборки в EDT. Повторно запускать при появлении новых runtime-ошибок; добавлять пары по мере появления.
+5. Держать patcher идемпотентным — каждая замена должна быть no-op'ом при повторном запуске.
