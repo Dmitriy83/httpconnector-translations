@@ -28,6 +28,23 @@ LITERAL_RESTORE_PAIRS = [
     ),
 ]
 
+# Russian literals that phase-1 restore must LEAVE TRANSLATED (skip the
+# line-aligned revert). These are struct-key / list-of-names literals that
+# the code reads/writes with English keys elsewhere — restoring them to
+# Russian would break runtime lookups. Without this list, phase-1 reverts
+# them and phase-2 re-applies the English translation on every run (stable
+# output but wasted work). Listing them here makes the pipeline a true
+# single-pass fixed point.
+RESTORE_EXCEPTIONS = frozenset({
+    "Наименование,Значение",
+    "Наименование, Значение",
+    "Пользователь, Пароль",
+    "Пользователь, Пароль, Тип",
+    "Имя,Данные,ИмяФайла",
+    "Файлы,Данные",
+    "УникальныйИдентификатор,ДвоичныеДанные",
+})
+
 # (russian_source, english_target) — longest-first ordering matters for
 # substring overlaps (e.g., match "повторы будут выполняться для конкретных
 # кодов состояний." before the shorter prefix).
@@ -104,18 +121,16 @@ REPLACEMENTS = [
     # empty. Revert to the RU lowercase form. ---
     ('"AWS4-hmac-sha256"',   '"aws4-hmac-sha256"'),
 
-    # --- Struct-key literals wrongly restored to Russian by phase 2 (identifier-like
-    # pattern with commas wasn't recognized). Force them back to English so module
-    # code accessing via .Name, .Value, etc. works. ---
+    # --- Struct-key / list-of-names literals — safety net for the RESTORE_EXCEPTIONS
+    # set. Normal flow: EDT translates them correctly, phase-1 leaves them alone
+    # (listed in RESTORE_EXCEPTIONS), phase-2 finds nothing to do. If something
+    # regresses (manual edit / unexpected EDT output), these pairs catch it. ---
     ('"Наименование,Значение"',         '"Name,Value"'),
     ('"Наименование, Значение"',        '"Name, Value"'),
     ('"Пользователь, Пароль"',          '"User, Password"'),
     ('"Пользователь, Пароль, Тип"',     '"User, Password, Type"'),
     ('"Имя,Данные,ИмяФайла"',           '"Name,Data,NameFile"'),
     ('"Файлы,Данные"',                  '"Files,Data"'),
-    # NamesPropertiesForProcessingRestore drives restore-callback iteration — must
-    # match the JSON/TypesProperties keys (which are English). Phase 1 reverted
-    # this Russian literal; force it back to English. ---
     ('"УникальныйИдентификатор,ДвоичныеДанные"', '"UUID,BinaryData"'),
 
     # --- Single-word data literals inconsistent with URL restores.
@@ -261,7 +276,9 @@ def _is_identifier_like(s: str) -> bool:
 def restore_literals(ru_path: Path, en_path: Path) -> int:
     """Revert EDT's tokenized translation of Russian string literals that
     represent test/data content (not procedure names or struct keys).
-    Line-by-line diff against RU source; restores only non-identifier literals."""
+    Line-by-line diff against RU source; restores only non-identifier literals.
+    Literals listed in RESTORE_EXCEPTIONS are left translated so phase-2
+    doesn't have to undo phase-1 work on every run."""
     if not ru_path.exists() or not en_path.exists():
         return 0
 
@@ -291,6 +308,8 @@ def restore_literals(ru_path: Path, en_path: Path) -> int:
         new_line = en_line
         for ru_lit, en_lit in zip(ru_lits, en_lits):
             if ru_lit == en_lit or not _CYR.search(ru_lit) or _is_identifier_like(ru_lit):
+                continue
+            if ru_lit in RESTORE_EXCEPTIONS:
                 continue
             new_line = new_line.replace(f'"{en_lit}"', f'"{ru_lit}"', 1)
             reverted += 1
