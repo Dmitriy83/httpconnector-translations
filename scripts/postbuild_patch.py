@@ -123,6 +123,14 @@ REPLACEMENTS = [
     ('"AWS4-hmac-SHA256"',   '"aws4-hmac-sha256"'),
     ('"aws4-hmac-SHA256"',   '"aws4-hmac-sha256"'),
     ('"AWS4-HMAC-sha256"',   '"aws4-hmac-sha256"'),
+    # --- x-amz-content-sha256 is an HTTP HEADER name; AWS requires lowercase in
+    # the canonical/signed headers list. Camelcase dict case-folds the `sha256`
+    # fragment to `SHA256` via the `SHA256=SHA256` identifier entry. That breaks
+    # the Authorization header signature comparison in Test_AuthenticationAWS4_*:
+    # module builds SignedHeaders via Lower(key) (lowercase), test's expected
+    # literal contains the case-folded `SHA256` (uppercase) — never equal. Revert
+    # header-name occurrences (both bare and `-` suffix) to lowercase. ---
+    ('x-amz-content-SHA256', 'x-amz-content-sha256'),
 
     # --- Struct-key / list-of-names literals — safety net for the RESTORE_EXCEPTIONS
     # set. Normal flow: EDT translates them correctly, phase-1 leaves them alone
