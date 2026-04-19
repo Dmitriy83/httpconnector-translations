@@ -11,7 +11,7 @@ import re
 from pathlib import Path
 
 OLD_DICT = Path(r"C:/Users/DmitryZhikharev/AppData/Local/1C/1cedtstart/projects/HTTP connector/dictionaries_en_old/src/CommonModules/HTTPConnector/Module_ro.trans")
-NEW_DICT = Path(r"C:/git/HTTPConnector/dictionaries_en/src/CommonModules/КоннекторHTTP/Module_en.trans")
+NEW_DICT = Path(r"C:/git/httpconnector-translations/dictionaries_en/src/CommonModules/КоннекторHTTP/Module_en.trans")
 OUT_DIR = Path(r"C:/git/1c-translations-with-model")
 
 

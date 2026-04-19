@@ -1,0 +1,23 @@
+#Translations for: interface
+
+Attribute.КоличествоТестов.Title=Test count
+Attribute.Тесты.Title=Tests
+Attribute.Тесты.Использование.Title=Usage
+Attribute.Тесты.Ошибка.Title=Error
+Attribute.Тесты.Результат.Title=Result
+Attribute.Тесты.Тест.Title=Test
+Command.ВыполнитьТесты.Title=Run tests
+Command.ВыполнитьТесты.ToolTip=Run tests
+Command.СнятьФлажки.Title=Uncheck all
+Command.УстановитьФлажки.Title=Check all
+Item.Группа1.Title=AWS4-HMAC-SHA256 authentication settings
+Item.Группа3.Title=Proxy server settings
+Item.Группа4.Title=1C websites authentication settings
+Item.ГруппаЛогинПароль.Title=Login and password
+Item.ГруппаСерверПорт.Title=Server and port
+Item.ПроксиПорт.Title=Port
+Item.ПроксиСервер.Title=Server
+Item.СтраницаНастройки.Title=Settings
+Item.СтраницаТесты.Title=Tests
+Item.Страницы.Title=Pages
+Item.Страницы.ToolTip=Pages

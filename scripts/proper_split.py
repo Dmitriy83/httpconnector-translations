@@ -10,8 +10,8 @@ Current entries NOT being translated by EDT:
 """
 from pathlib import Path
 
-CAMEL = Path(r"C:/git/HTTPConnector/dictionaries_en/src/common-camelcase_en.dict")
-COMMON = Path(r"C:/git/HTTPConnector/dictionaries_en/src/common_en.dict")
+CAMEL = Path(r"C:/git/httpconnector-translations/dictionaries_en/src/common-camelcase_en.dict")
+COMMON = Path(r"C:/git/httpconnector-translations/dictionaries_en/src/common_en.dict")
 
 TO_COMMON = {
     "Имя": "Name",

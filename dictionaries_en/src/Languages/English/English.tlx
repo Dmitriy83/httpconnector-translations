@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<v8lang:V8TranslateLanguage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:v8lang="http://1c.ru/langtool/v8/dt/lang/model" uuid="f42c30f9-2fb2-42d7-a4f1-f7360c1abbaa">
+  <name>English</name>
+  <synonym>
+    <key></key>
+    <value>Language</value>
+  </synonym>
+  <languageCode>en</languageCode>
+  <option>MODEL_AND_INTERFACE</option>
+</v8lang:V8TranslateLanguage>

@@ -7,7 +7,7 @@ of the Russian name.
 """
 from pathlib import Path
 
-CAMEL = Path(r"C:/git/HTTPConnector/dictionaries_en/src/common-camelcase_en.dict")
+CAMEL = Path(r"C:/git/httpconnector-translations/dictionaries_en/src/common-camelcase_en.dict")
 
 OVERRIDES = {
     # HTTPResponse.КодСостояния is StatusCode, not CodeStatus

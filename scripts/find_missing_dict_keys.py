@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 
 RU_MOD = Path(r"C:/Users/DmitryZhikharev/AppData/Local/1C/1cedtstart/projects/HTTP connector/HTTPConnector_ru/src/CommonModules/КоннекторHTTP/Module.bsl")
-DICT = Path(r"C:/git/HTTPConnector/dictionaries_en/src/common-camelcase_en.dict")
+DICT = Path(r"C:/git/httpconnector-translations/dictionaries_en/src/common-camelcase_en.dict")
 OUT = Path(r"C:/git/1c-translations-with-model/missing_keys.out")
 
 text = RU_MOD.read_bytes().decode("utf-8-sig")

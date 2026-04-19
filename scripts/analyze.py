@@ -2,7 +2,7 @@ import re
 from pathlib import Path
 
 OLD = Path(r"C:/Users/DmitryZhikharev/AppData/Local/1C/1cedtstart/projects/HTTP connector/dictionaries_en_old/src")
-NEW = Path(r"C:/git/HTTPConnector/dictionaries_en/src")
+NEW = Path(r"C:/git/httpconnector-translations/dictionaries_en/src")
 
 def read_props(p):
     d = {}

@@ -10,7 +10,7 @@ import re
 from pathlib import Path
 import importlib.util
 
-TARGET = Path(r"C:/git/HTTPConnector/dictionaries_en/src/common-camelcase_en.dict")
+TARGET = Path(r"C:/git/httpconnector-translations/dictionaries_en/src/common-camelcase_en.dict")
 SRC = Path(r"C:/git/1c-translations-with-model/scripts/camelcase_token_tr.py")
 
 

@@ -6,7 +6,7 @@ Preserves file structure: header, blank lines, line order, line endings, BOM.
 from pathlib import Path
 
 OLD_ROOT = Path(r"C:/Users/DmitryZhikharev/AppData/Local/1C/1cedtstart/projects/HTTP connector/dictionaries_en_old/src")
-NEW_ROOT = Path(r"C:/git/HTTPConnector/dictionaries_en/src")
+NEW_ROOT = Path(r"C:/git/httpconnector-translations/dictionaries_en/src")
 
 # (old relative path, new relative path)
 PAIRS = [

@@ -3,7 +3,7 @@
 2. Add nested ** field keys under ParametersConversionJSON."""
 from pathlib import Path
 
-TARGET = Path(r"C:/git/HTTPConnector/dictionaries_en/src/CommonModules/КоннекторHTTP/Module_en.trans")
+TARGET = Path(r"C:/git/httpconnector-translations/dictionaries_en/src/CommonModules/КоннекторHTTP/Module_en.trans")
 
 UPDATES = {
     # Replace the huge old value with a short one matching source line

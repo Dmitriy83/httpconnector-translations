@@ -14,7 +14,7 @@ from pathlib import Path
 EN_SRC   = Path(r"C:/git/HTTPConnector/src/en/CommonModules/HTTPConnector/Ext/Module.bsl")
 RU_SRC   = Path(r"C:/git/HTTPConnector/src/ru/CommonModules/КоннекторHTTP/Ext/Module.bsl")
 OLD_DICT = Path(r"C:/Users/DmitryZhikharev/AppData/Local/1C/1cedtstart/projects/HTTP connector/dictionaries_en_old/src/CommonModules/HTTPConnector/Module_ro.trans")
-NEW_DICT = Path(r"C:/git/HTTPConnector/dictionaries_en/src/CommonModules/КоннекторHTTP/Module_en.trans")
+NEW_DICT = Path(r"C:/git/httpconnector-translations/dictionaries_en/src/CommonModules/КоннекторHTTP/Module_en.trans")
 
 APPLY = True  # set False for dry-run
 

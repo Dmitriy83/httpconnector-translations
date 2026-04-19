@@ -1,0 +1,5 @@
+#Translations for: model
+
+Method.ВыполнитьТестыНаСервере.Description=Runs the test execution
+Method.ПолучитьСписокТестов.Description=Returns the list of tests
+Method.Тест_POST_MultipartFormData_ФайлыИПоляФормы_КонструкторПараметров.Comment.Должно\ быть\ "Привет,\ Мир".Description=Should be "Hello, World"

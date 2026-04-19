@@ -1,0 +1,16 @@
+#Translations for: interface
+
+Attribute.ИдентификаторКлючаДоступа.Synonym=Access key identifier
+Attribute.Логин.Synonym=Login
+Attribute.Очередь.Synonym=Queue
+Attribute.Пароль.Synonym=Password
+Attribute.ПроксиПорт.Synonym=Proxy port
+Attribute.ПроксиСервер.Synonym=Proxy server
+Attribute.Регион.Synonym=Region
+Attribute.СекретныйКлюч.Synonym=Secret key
+Attribute.ТестироватьАутентификациюAWS4_HMAC_SHA256.Synonym=Test AWS4-HMAC-SHA256 authentication
+Attribute.ТестироватьПовторы.Synonym=Test retries
+Attribute.ТестироватьПолучениеСпискаРелизовВСайта1С.Synonym=Test fetching release list from 1C website
+Attribute.ТестироватьСоединениеЧерезПрокси.Synonym=Test connection through proxy
+Form.Форма.Synonym=Form
+Synonym=Tests

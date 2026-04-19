@@ -6,7 +6,7 @@ Outputs per-file files under `untr/` for manual translation.
 import re
 from pathlib import Path
 
-NEW_ROOT = Path(r"C:/git/HTTPConnector/dictionaries_en/src")
+NEW_ROOT = Path(r"C:/git/httpconnector-translations/dictionaries_en/src")
 OUT_DIR = Path(r"C:/git/1c-translations-with-model/untr")
 OUT_DIR.mkdir(exist_ok=True)
 

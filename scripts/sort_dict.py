@@ -6,7 +6,7 @@ sorted section so EDT picks them up.
 """
 from pathlib import Path
 
-TARGET = Path(r"C:/git/HTTPConnector/dictionaries_en/src/common-camelcase_en.dict")
+TARGET = Path(r"C:/git/httpconnector-translations/dictionaries_en/src/common-camelcase_en.dict")
 
 
 def split_kv(line):

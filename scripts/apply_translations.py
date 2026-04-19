@@ -6,7 +6,7 @@ replaces the value. Preserves file structure (header, blank lines, EOL, BOM).
 from pathlib import Path
 import importlib.util
 
-TARGET = Path(r"C:/git/HTTPConnector/dictionaries_en/src/CommonModules/КоннекторHTTP/Module_en.trans")
+TARGET = Path(r"C:/git/httpconnector-translations/dictionaries_en/src/CommonModules/КоннекторHTTP/Module_en.trans")
 SRC = Path(r"C:/git/1c-translations-with-model/scripts/translations_module_trans.py")
 
 

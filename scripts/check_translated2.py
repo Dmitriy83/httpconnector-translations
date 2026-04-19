@@ -2,8 +2,8 @@
 import re
 from pathlib import Path
 
-MOD = Path(r"C:/Users/DmitryZhikharev/AppData/Local/1C/1cedtstart/projects/HTTP connector/HTTPConnector_translated_project/src/CommonModules/ConnectorHTTP/Module.bsl")
-OUT = Path(r"C:/git/1c-translations-with-model/check_translated2.out")
+MOD = Path(r"C:/Users/DmitryZhikharev/AppData/Local/1C/1cedtstart/projects/HTTP connector/HTTPConnector_translated_project/src/CommonModules/HTTPConnector/Module.bsl")
+OUT = Path(r"C:/git/httpconnector-translations/check_translated2.out")
 
 lines = MOD.read_bytes().decode("utf-8-sig").split("\n")
 
