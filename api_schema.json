@@ -1,0 +1,711 @@
+{
+  "source": "HTTPConnector repo HEAD:src/en/CommonModules/HTTPConnector/Ext/Module.bsl",
+  "module": "HTTPConnector",
+  "note": "Authoritative API contract. Fields listed under return_fields are what consumer code accesses on the return value of that method. Rebuilds must preserve every name verbatim.",
+  "exports": [
+    {
+      "kind": "Function",
+      "name": "AsBinaryData",
+      "params": [
+        {
+          "name": "Response"
+        }
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "AsException",
+      "params": [
+        {
+          "name": "Response"
+        },
+        {
+          "name": "TextForUser",
+          "default": "Undefined"
+        }
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "AsJson",
+      "params": [
+        {
+          "name": "Response"
+        },
+        {
+          "name": "JSONConversionParameters",
+          "default": "Undefined"
+        }
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "AsText",
+      "params": [
+        {
+          "name": "Response"
+        },
+        {
+          "name": "Encoding",
+          "default": "Undefined"
+        }
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "AsXDTO",
+      "params": [
+        {
+          "name": "Response"
+        },
+        {
+          "name": "XMLReaderSettings",
+          "default": "Undefined"
+        },
+        {
+          "name": "XMLSchemaSet",
+          "default": "Undefined"
+        },
+        {
+          "name": "Encoding",
+          "default": "Undefined"
+        }
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "CallMethod",
+      "params": [
+        {
+          "name": "Method"
+        },
+        {
+          "name": "URL"
+        },
+        {
+          "name": "AdditionalParameters",
+          "default": "Undefined"
+        },
+        {
+          "name": "Session",
+          "default": "Undefined"
+        }
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "DateFromString",
+      "params": [
+        {
+          "name": "String"
+        }
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "DateFromStringRFC7231",
+      "params": [
+        {
+          "name": "String"
+        }
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "Delete",
+      "params": [
+        {
+          "name": "URL"
+        },
+        {
+          "name": "Data",
+          "default": "Undefined"
+        },
+        {
+          "name": "AdditionalParameters",
+          "default": "Undefined"
+        },
+        {
+          "name": "Session",
+          "default": "Undefined"
+        }
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "DeleteJson",
+      "params": [
+        {
+          "name": "URL"
+        },
+        {
+          "name": "Json"
+        },
+        {
+          "name": "AdditionalParameters",
+          "default": "Undefined"
+        },
+        {
+          "name": "Session",
+          "default": "Undefined"
+        }
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "Get",
+      "params": [
+        {
+          "name": "URL"
+        },
+        {
+          "name": "RequestParameters",
+          "default": "Undefined"
+        },
+        {
+          "name": "AdditionalParameters",
+          "default": "Undefined"
+        },
+        {
+          "name": "Session",
+          "default": "Undefined"
+        }
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "GetJson",
+      "params": [
+        {
+          "name": "URL"
+        },
+        {
+          "name": "RequestParameters",
+          "default": "Undefined"
+        },
+        {
+          "name": "AdditionalParameters",
+          "default": "Undefined"
+        },
+        {
+          "name": "Session",
+          "default": "Undefined"
+        }
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "Head",
+      "params": [
+        {
+          "name": "URL"
+        },
+        {
+          "name": "AdditionalParameters",
+          "default": "Undefined"
+        },
+        {
+          "name": "Session",
+          "default": "Undefined"
+        }
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "HMAC",
+      "params": [
+        {
+          "name": "Key_"
+        },
+        {
+          "name": "Data"
+        },
+        {
+          "name": "Algorithm"
+        }
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "HTTPStatusCodePresentation",
+      "params": [
+        {
+          "name": "StatusCode"
+        }
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "HTTPStatusCodes",
+      "params": []
+    },
+    {
+      "kind": "Function",
+      "name": "JsonConversion",
+      "params": [
+        {
+          "name": "Property"
+        },
+        {
+          "name": "Value"
+        },
+        {
+          "name": "AdditionalParameters"
+        },
+        {
+          "name": "Cancel"
+        }
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "JsonToObject",
+      "params": [
+        {
+          "name": "Json"
+        },
+        {
+          "name": "Encoding",
+          "default": "\"utf-8\""
+        },
+        {
+          "name": "ConversionParameters",
+          "default": "Undefined"
+        }
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "Mkcol",
+      "params": [
+        {
+          "name": "URL"
+        },
+        {
+          "name": "Data",
+          "default": "Undefined"
+        },
+        {
+          "name": "AdditionalParameters",
+          "default": "Undefined"
+        },
+        {
+          "name": "Session",
+          "default": "Undefined"
+        }
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "NewAuthenticationAWS4",
+      "params": [
+        {
+          "name": "KeyAccess",
+          "default": "\"\""
+        },
+        {
+          "name": "SecretKey",
+          "default": "\"\""
+        },
+        {
+          "name": "Service",
+          "default": "\"\""
+        },
+        {
+          "name": "Region",
+          "default": "\"\""
+        }
+      ],
+      "return_fields": [
+        "Type",
+        "AccessKeyID",
+        "SecretKey",
+        "Service",
+        "Region"
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "NewAuthenticationBasic",
+      "params": [
+        {
+          "name": "User",
+          "default": "\"\""
+        },
+        {
+          "name": "Password",
+          "default": "\"\""
+        }
+      ],
+      "return_fields": [
+        "Type",
+        "User",
+        "Password"
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "NewAuthenticationBearer",
+      "params": [
+        {
+          "name": "Token",
+          "default": "\"\""
+        }
+      ],
+      "return_fields": [
+        "Type",
+        "Token"
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "NewAuthenticationDigest",
+      "params": [
+        {
+          "name": "User",
+          "default": "\"\""
+        },
+        {
+          "name": "Password",
+          "default": "\"\""
+        }
+      ],
+      "return_fields": [
+        "Type",
+        "User",
+        "Password"
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "NewAuthenticationOS",
+      "params": [],
+      "return_fields": [
+        "UseOSAuthentication"
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "NewFileToSend",
+      "params": [
+        {
+          "name": "Name"
+        },
+        {
+          "name": "FileName"
+        },
+        {
+          "name": "Data",
+          "default": "Undefined"
+        },
+        {
+          "name": "Type",
+          "default": "Undefined"
+        }
+      ],
+      "return_fields": [
+        "Name",
+        "FileName",
+        "Data",
+        "Type",
+        "Headers"
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "NewParameters",
+      "params": [],
+      "return_fields": [
+        "Headers",
+        "Authentication",
+        "Proxy",
+        "RequestParameters",
+        "VerifySSL",
+        "ClientSSLCertificate",
+        "Cookies",
+        "Timeout",
+        "AllowRedirect",
+        "Json",
+        "JSONConversionParameters",
+        "Data",
+        "Files",
+        "MaximumNumberOfRetries",
+        "MaximumTimeOfRetries",
+        "ExponentialDelayRatio",
+        "ToRetryForStatusesCodes"
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "NewResponse",
+      "params": [],
+      "return_fields": [
+        "Method",
+        "URL",
+        "StatusCode",
+        "Headers",
+        "Body",
+        "Encoding",
+        "TimeExecution",
+        "IsPermanentRedirect",
+        "IsRedirect",
+        "Cookies",
+        "Error"
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "NewSession",
+      "params": [],
+      "return_fields": [
+        "Headers",
+        "Authentication",
+        "Proxy",
+        "RequestParameters",
+        "VerifySSL",
+        "ClientSSLCertificate",
+        "MaximumNumberOfRedirects",
+        "Cookies",
+        "ServiceData"
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "NumberFromString",
+      "params": [
+        {
+          "name": "String"
+        }
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "ObjectToJson",
+      "params": [
+        {
+          "name": "Object"
+        },
+        {
+          "name": "ConversionParameters",
+          "default": "Undefined"
+        },
+        {
+          "name": "WriterSettings",
+          "default": "Undefined"
+        }
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "Options",
+      "params": [
+        {
+          "name": "URL"
+        },
+        {
+          "name": "AdditionalParameters",
+          "default": "Undefined"
+        },
+        {
+          "name": "Session",
+          "default": "Undefined"
+        }
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "ParseURL",
+      "params": [
+        {
+          "name": "URL"
+        }
+      ],
+      "return_fields": [
+        "Scheme",
+        "Authentication",
+        "Host",
+        "Port",
+        "Path",
+        "RequestParameters",
+        "Fragment"
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "Patch",
+      "params": [
+        {
+          "name": "URL"
+        },
+        {
+          "name": "Data",
+          "default": "Undefined"
+        },
+        {
+          "name": "AdditionalParameters",
+          "default": "Undefined"
+        },
+        {
+          "name": "Session",
+          "default": "Undefined"
+        }
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "Post",
+      "params": [
+        {
+          "name": "URL"
+        },
+        {
+          "name": "Data",
+          "default": "Undefined"
+        },
+        {
+          "name": "AdditionalParameters",
+          "default": "Undefined"
+        },
+        {
+          "name": "Session",
+          "default": "Undefined"
+        }
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "PostJson",
+      "params": [
+        {
+          "name": "URL"
+        },
+        {
+          "name": "Json"
+        },
+        {
+          "name": "AdditionalParameters",
+          "default": "Undefined"
+        },
+        {
+          "name": "Session",
+          "default": "Undefined"
+        }
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "PrepareRequest",
+      "params": [
+        {
+          "name": "Session"
+        },
+        {
+          "name": "Method"
+        },
+        {
+          "name": "URL"
+        },
+        {
+          "name": "AdditionalParameters"
+        }
+      ],
+      "return_fields": [
+        "Cookies",
+        "Authentication",
+        "Method",
+        "Headers",
+        "RequestParameters",
+        "URL",
+        "JSONConversionParameters"
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "Put",
+      "params": [
+        {
+          "name": "URL"
+        },
+        {
+          "name": "Data",
+          "default": "Undefined"
+        },
+        {
+          "name": "AdditionalParameters",
+          "default": "Undefined"
+        },
+        {
+          "name": "Session",
+          "default": "Undefined"
+        }
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "PutJson",
+      "params": [
+        {
+          "name": "URL"
+        },
+        {
+          "name": "Json"
+        },
+        {
+          "name": "AdditionalParameters",
+          "default": "Undefined"
+        },
+        {
+          "name": "Session",
+          "default": "Undefined"
+        }
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "ReadGZip",
+      "params": [
+        {
+          "name": "CompressedData"
+        }
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "RestoreJson",
+      "params": [
+        {
+          "name": "Property"
+        },
+        {
+          "name": "Value"
+        },
+        {
+          "name": "TypesProperties"
+        }
+      ]
+    },
+    {
+      "kind": "Function",
+      "name": "StrStartsWith",
+      "params": [
+        {
+          "name": "String"
+        },
+        {
+          "name": "SearchString"
+        }
+      ],
+      "upstream_removed": true,
+      "upstream_removed_note": "Old hand-translation had this as a wrapper for platform built-in StrStartWith (note: no trailing \"s\" in Start). New RU source dropped the wrapper; consumers calling HTTPConnector.StrStartsWith(...) must migrate to the platform function directly."
+    },
+    {
+      "kind": "Function",
+      "name": "WriteGZip",
+      "params": [
+        {
+          "name": "Data"
+        }
+      ]
+    }
+  ]
+}

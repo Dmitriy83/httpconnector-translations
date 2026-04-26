@@ -212,7 +212,11 @@ See [POSTBUILD_PATCHER.md](POSTBUILD_PATCHER.md) for the standalone deep-dive on
 
 **camelcase tokenizer** (`camelcase_token_tr.py` + `apply_camelcase.py`): for `common-camelcase_<lang>.dict` where CamelCase composites combine Cyrillic and Latin parts (e.g., `GZipРазмерFooter`). Tokenizes each value, substitutes each Cyrillic token via a 600+ entry token dict, rejoins preserving Latin parts. Aborts with a report if any token lacks a translation.
 
+**Orphan-module cleanup** (`cleanup_orphan_modules.py`) — runs **after every EDT dependent-translation rebuild**. When a whole-identifier override in `common-camelcase_<lang>.dict` is renamed (e.g. `КоннекторHTTP=ConnectorHTTP` → `=HTTPConnector`), EDT's translation builder creates the new module directory but does NOT delete the old one. The orphan directory keeps its `.bsl`/`.form` files but loses its `<Name>.mdo` metadata file. EDT's validator still picks up these orphan modules and reports phantom errors. The cleanup script walks the standard metadata-category directories (CommonModules, Catalogs, Documents, DataProcessors, etc.) and removes any subdirectory that lacks its `<Name>.mdo`. Cyrillic-named directories are intentional RU mirrors and are skipped. `--dry-run` to preview.
+
 **Post-build patcher** (`postbuild_patch.py`) — the final fixup layer that runs **after every EDT dependent-translation rebuild**. Covers residuals that EDT cannot translate correctly via dictionaries alone: wrong platform aliases, HTTP verb case-folding, tokenized string literals in test data, and more. See [POSTBUILD_PATCHER.md](POSTBUILD_PATCHER.md).
+
+**API contract check** (`verify_api.py` + `api_schema.json`) — guards against breaking the published API. `api_schema.json` is the authoritative contract extracted once from the old hand-translated English source (`git show HEAD:src/en/...` in the external HTTPConnector repo) via `extract_api_schema.py`. It enumerates every exported method, parameter names/defaults, and structure-field names built inside exported methods (returned to consumer code). After every rebuild, run `verify_api.py` — it scans the translated module and flags any missing methods, renamed parameters, or missing return fields as hard errors. Entries marked `"upstream_removed": true` are treated as deprecated and expected-absent. When RU upstream adds a new exported method, `accept_new_api.py` (dry-run by default, `--apply` to commit) appends it to the schema after human review.
 
 ### Analysis / diagnostic scripts
 
@@ -336,14 +340,16 @@ Before starting on a new project, retarget the `PROJ` / path constants at the to
    - `fix_platform_fields.py` — override platform field names where tokenizer reverses word order (`КодСостояния=StatusCode`, etc.). Add cases as you discover them via test failures.
 8. **Storage split.** `proper_split.py` — ensure non-CamelCase single-word identifiers (like `Имя`) go to `common_<lang>.dict`, not `common-camelcase_<lang>.dict`.
 9. **Build translated project in EDT.**
-10. **Scan code-level residuals.** `check_translated2.py` — report CODE and DOC issues separately. CODE issues must go to 0; DOC issues may remain if EDT's generator skipped sub-field keys.
-11. **Fill `.trans` gaps.** For methods where EDT generator created only 1-2 keys instead of per-field ones, add missing keys manually via scripts modeled after `add_newparams_keys.py` / `fix_newparams_finale.py`. Watch for the "duplicate `// Возвращаемое значение:` in nested callback" trigger — renaming the nested one unblocks the generator.
-12. **Run post-build patcher.** `postbuild_patch.py` — see [POSTBUILD_PATCHER.md](POSTBUILD_PATCHER.md) for the full rationale. Handles:
+10. **Clean up orphan modules.** `cleanup_orphan_modules.py` — deletes module directories left over by previous dictionary-rename cycles (any `<Category>/<Name>/` without a `<Name>.mdo` metadata file, excluding Cyrillic-named RU mirrors). Run after every EDT rebuild — the translation builder doesn't clean up renamed modules itself.
+11. **Scan code-level residuals.** `check_translated2.py` — report CODE and DOC issues separately. CODE issues must go to 0; DOC issues may remain if EDT's generator skipped sub-field keys.
+12. **Fill `.trans` gaps.** For methods where EDT generator created only 1-2 keys instead of per-field ones, add missing keys manually via scripts modeled after `add_newparams_keys.py` / `fix_newparams_finale.py`. Watch for the "duplicate `// Возвращаемое значение:` in nested callback" trigger — renaming the nested one unblocks the generator.
+13. **Run post-build patcher.** `postbuild_patch.py` — see [POSTBUILD_PATCHER.md](POSTBUILD_PATCHER.md) for the full rationale. Handles:
     - EDT's wrong platform aliases (phase-1 replacements).
     - HTTP method literal case (`"Post"` → `"POST"` at `CallHTTPMethod` call-sites).
     - Platform field renames (phase-1 safety net for step 7's `fix_platform_fields`).
     - Test-data string literals mistranslated by camelcase dict (phase 2 — line-aligned diff against RU source; configure `LITERAL_RESTORE_PAIRS` per module).
     - Idempotent — re-run after every EDT rebuild.
-13. **Final verify.** `check_translated2.py` should report `CODE issues: 0  DOC issues: 0` and all tests should pass.
+14. **Final verify.** `check_translated2.py` should report `CODE issues: 0  DOC issues: 0` and all tests should pass.
+15. **API contract check.** `verify_api.py` must exit 0. If it reports new exports from upstream, review them and run `accept_new_api.py --apply` to add them to `api_schema.json`. If an expected export is missing, first check whether it's an upstream-deliberate removal (mark with `"upstream_removed": true`) or a translation regression (fix the dict / postbuild).
 
 If a test still fails with `Object field not found (...)` or `Procedure or function with the specified name is not defined (...)`, the likely cause is another wrong EDT platform mapping — verify the correct English name via EDT's `get_platform_documentation` MCP tool or 1C docs, then add an override in `fix_platform_fields.py` / `fix_str_builtins.py` and a corresponding rewrite pair in `postbuild_patch.py`.

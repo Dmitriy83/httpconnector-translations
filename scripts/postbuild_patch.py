@@ -104,6 +104,24 @@ REPLACEMENTS = [
     ("ПрочитатьZip",           "ReadZip"),
     ("НоваяCookie",            "NewCookie"),
     ("ОбработчикиКомандФормы", "FormCommandsEventHandlers"),
+    ("КлиентскийСертификат",   "ClientCertificate"),
+    ("КодыСостояний",          "StatusCodes"),
+    ("СертификатКлиентаФайл",  "FileClientCertificate"),
+    ("СертификатКлиентаWindows", "WindowsClientCertificate"),
+
+    # --- EDT auto-prefixes Var_ to `Ключ` param/local to avoid conflict.
+    # Old hand-translation used Key_ (with trailing underscore) everywhere —
+    # both as HMAC's exported param (API contract) and as local variables.
+    # Key_ is a valid BSL identifier, so blanket rewrite is safe.
+    ("Var_Key", "Key_"),
+
+    # --- PredefinedValue() enum path must be English on EN platform.
+    # Phase-1 literal-restore sees the string literal on the RU line and
+    # reverts EDT's correct English translation. Force it back here.
+    (
+        'PredefinedValue("ВариантЗаписиДатыJSON.УниверсальнаяДата")',
+        'PredefinedValue("JSONDateWritingVariant.UniversalDate")',
+    ),
 
     # --- Revert the wrong FromBeginning fix (EDT's FromBegin is actually correct) ---
     (".FromBeginning)",  ".FromBegin)"),
