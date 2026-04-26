@@ -48,6 +48,7 @@ Result: an English source tree in `HTTPConnector_translated_project/` (inside ED
 1.  clean RU                                    # EDT rebuilds the Russian project
 2.  translate                                   # EDT LanguageTool: RU dict → EN artifacts
 3.  cleanup_orphan_modules.py                   # drop directories without .mdo (after dict renames)
+3a. check_module_header_drift.py                # year/version drift in module-header docstring
 4.  postbuild_patch.py                          # 23 phase-1 + 137 phase-2 fixes
 5.  clean translated_project                    # EDT re-reads after postbuild
 6.  check_translated2.py                        # residual Cyrillic detector (CODE+DOC)
@@ -85,6 +86,7 @@ Full reference with parameters in [CLAUDE.md → Tooling](CLAUDE.md). Quick inde
 
 **Pipeline (run after every EDT rebuild):**
 - `cleanup_orphan_modules.py` — drop module directories left over by dictionary renames
+- `check_module_header_drift.py` — detect drift of literal facts (year, version) in the module-header docstring
 - `postbuild_patch.py` — fix residual translation bugs, see [POSTBUILD_PATCHER.md](POSTBUILD_PATCHER.md)
 - `check_translated2.py` — residual-Cyrillic detector
 - `verify_api.py` — API contract check

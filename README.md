@@ -48,6 +48,7 @@ EDT не справляется с переводом 100% символов из
 1.  clean RU                                    # EDT перестраивает русский проект
 2.  translate                                   # EDT LanguageTool: RU словарь → EN артефакты
 3.  cleanup_orphan_modules.py                   # удаление папок без .mdo (после переименований словаря)
+3a. check_module_header_drift.py                # дрейф year/version в module-header
 4.  postbuild_patch.py                          # 23 phase-1 + 137 phase-2 правок
 5.  clean translated_project                    # EDT перечитывает после postbuild
 6.  check_translated2.py                        # ищет остаточную кириллицу (CODE+DOC)
@@ -85,6 +86,7 @@ Pipeline идемпотентный: повторный прогон даёт б
 
 **Pipeline (запускаются после каждой пересборки EDT):**
 - `cleanup_orphan_modules.py` — удаление мусорных папок модулей после переименований словаря
+- `check_module_header_drift.py` — детектор дрейфа литералов (год/версия) в module-header docstring
 - `postbuild_patch.py` — фикс остаточных багов перевода, см. [POSTBUILD_PATCHER.md](POSTBUILD_PATCHER.md)
 - `check_translated2.py` — детектор остаточной кириллицы
 - `verify_api.py` — проверка контракта API
