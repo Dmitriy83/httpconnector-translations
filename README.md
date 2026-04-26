@@ -54,7 +54,7 @@ EDT не справляется с переводом 100% символов из
 3a. check_module_header_drift.py                # дрейф year/version в module-header
 4.  postbuild_patch.py                          # 23 phase-1 + 137 phase-2 правок
 5.  clean translated_project                    # EDT перечитывает после postbuild
-6.  check_translated2.py                        # ищет остаточную кириллицу (CODE+DOC)
+6.  check_translated.py                        # ищет остаточную кириллицу (CODE+DOC)
 7.  verify_api.py                               # сверяет API с api_schema.json
 8.  get_project_errors (whitelist)              # EDT-валидация EN-модулей
 9.  export_configuration_to_xml                 # выгрузка в staging
@@ -91,7 +91,7 @@ Pipeline идемпотентный: повторный прогон даёт б
 - `cleanup_orphan_modules.py` — удаление мусорных папок модулей после переименований словаря
 - `check_module_header_drift.py` — детектор дрейфа литералов (год/версия) в module-header docstring
 - `postbuild_patch.py` — фикс остаточных багов перевода, см. [POSTBUILD_PATCHER.md](POSTBUILD_PATCHER.md)
-- `check_translated2.py` — детектор остаточной кириллицы
+- `check_translated.py` — детектор остаточной кириллицы
 - `verify_api.py` — проверка контракта API
 - `accept_new_api.py` — пополнение схемы API когда upstream добавляет экспортный метод
 

@@ -197,7 +197,7 @@ Both language files must have identical key sets. If a target-language file is m
 
 All scripts live in [scripts/](scripts/) under three subdirectories:
 
-- [scripts/pipeline/](scripts/pipeline/) — run on every rebuild (`accept_new_api`, `check_module_header_drift`, `check_translated2`, `cleanup_orphan_modules`, `postbuild_patch`, `verify_api`)
+- [scripts/pipeline/](scripts/pipeline/) — run on every rebuild (`accept_new_api`, `check_module_header_drift`, `check_translated`, `cleanup_orphan_modules`, `postbuild_patch`, `verify_api`)
 - [scripts/analysis/](scripts/analysis/) — diagnostic / one-off analysis (`mine_compound_ids`, `extract_api_schema`, `extract_*_untranslated`, `find_*`, `analyze`, `estimate`, `camelcase_tokens`)
 - [scripts/migration/](scripts/migration/) — bootstrap from an older translation + dictionary hygiene (`migrate*`, `apply_*` paired with their `translations_*` / `camelcase_token_tr` data tables, `sort_dict`, `proper_split`, `fix_*`, `add_newparams_keys`, `fix_newparams_finale`)
 
@@ -236,7 +236,7 @@ See [POSTBUILD_PATCHER.md](POSTBUILD_PATCHER.md) for the standalone deep-dive on
 - `find_missing_dict_keys.py` — Cyrillic identifiers used in RU source that don't appear as keys in the camelcase dict.
 - `find_str_ids.py` — list all `Стр*` identifiers used in a module (for auditing which platform string built-ins need patcher handling).
 - `find_translated_literals.py` — line-by-line diff of RU source vs. translated module; reports string literals whose content changed (diagnostic for literal-restoration).
-- `check_translated2.py` — scan the EDT-translated module for residual Cyrillic, separating code-level issues (actionable) from doc-comment gaps.
+- `check_translated.py` — scan the EDT-translated module for residual Cyrillic, separating code-level issues (actionable) from doc-comment gaps.
 
 ### Dict-layout / hygiene helpers
 
@@ -350,7 +350,7 @@ Before starting on a new project, retarget the `PROJ` / path constants at the to
 9. **Build translated project in EDT.**
 10. **Clean up orphan modules.** `cleanup_orphan_modules.py` — deletes module directories left over by previous dictionary-rename cycles (any `<Category>/<Name>/` without a `<Name>.mdo` metadata file, excluding Cyrillic-named RU mirrors). Run after every EDT rebuild — the translation builder doesn't clean up renamed modules itself.
 10a. **Check module-header drift.** `check_module_header_drift.py` — flags mismatches between literal year/version values in the RU module-header docstring and the frozen English translation in `Module_en.trans` (`Description=` key). If drift is reported, edit the `.trans` value to match the current RU.
-11. **Scan code-level residuals.** `check_translated2.py` — report CODE and DOC issues separately. CODE issues must go to 0; DOC issues may remain if EDT's generator skipped sub-field keys.
+11. **Scan code-level residuals.** `check_translated.py` — report CODE and DOC issues separately. CODE issues must go to 0; DOC issues may remain if EDT's generator skipped sub-field keys.
 12. **Fill `.trans` gaps.** For methods where EDT generator created only 1-2 keys instead of per-field ones, add missing keys manually via scripts modeled after `add_newparams_keys.py` / `fix_newparams_finale.py`. Watch for the "duplicate `// Возвращаемое значение:` in nested callback" trigger — renaming the nested one unblocks the generator.
 13. **Run post-build patcher.** `postbuild_patch.py` — see [POSTBUILD_PATCHER.md](POSTBUILD_PATCHER.md) for the full rationale. Handles:
     - EDT's wrong platform aliases (phase-1 replacements).
@@ -358,7 +358,7 @@ Before starting on a new project, retarget the `PROJ` / path constants at the to
     - Platform field renames (phase-1 safety net for step 7's `fix_platform_fields`).
     - Test-data string literals mistranslated by camelcase dict (phase 2 — line-aligned diff against RU source; configure `LITERAL_RESTORE_PAIRS` per module).
     - Idempotent — re-run after every EDT rebuild.
-14. **Final verify.** `check_translated2.py` should report `CODE issues: 0  DOC issues: 0` and all tests should pass.
+14. **Final verify.** `check_translated.py` should report `CODE issues: 0  DOC issues: 0` and all tests should pass.
 15. **API contract check.** `verify_api.py` must exit 0. If it reports new exports from upstream, review them and run `accept_new_api.py --apply` to add them to `api_schema.json`. If an expected export is missing, first check whether it's an upstream-deliberate removal (mark with `"upstream_removed": true`) or a translation regression (fix the dict / postbuild).
 
 If a test still fails with `Object field not found (...)` or `Procedure or function with the specified name is not defined (...)`, the likely cause is another wrong EDT platform mapping — verify the correct English name via EDT's `get_platform_documentation` MCP tool or 1C docs, then add an override in `fix_platform_fields.py` / `fix_str_builtins.py` and a corresponding rewrite pair in `postbuild_patch.py`.
