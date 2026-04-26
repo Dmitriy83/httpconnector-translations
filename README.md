@@ -74,7 +74,7 @@ Pipeline идемпотентный: повторный прогон даёт б
 - **Python 3.10+** для pipeline-скриптов.
 - **Git** для работы с upstream HTTPConnector.
 
-Опционально: [EDT-MCP плагин](https://github.com/DitriXNew/EDT-MCP) с тулами `translate_configuration` / `export_configuration_to_xml` / `run_language_tool` / `convert_to_translation_language` / `import_translations_from_translated_object` / `get_translation_project_info` / `cleanup_orphan_modules` — для запуска pipeline через AI-ассистент (Claude Code, Cursor, Copilot).
+Опционально: [EDT-MCP плагин](https://github.com/DitriXNew/EDT-MCP) с тулами `translate_configuration` / `export_configuration_to_xml` / `generate_translation_strings` / `convert_to_translation_language` / `import_translations_from_translated_object` / `get_translation_project_info` / `cleanup_orphan_modules` — для запуска pipeline через AI-ассистент (Claude Code, Cursor, Copilot).
 
 ## Быстрый старт
 

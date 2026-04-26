@@ -74,7 +74,7 @@ Steps 1–2, 5, 8–9 happen inside EDT (driven via the [EDT-MCP server](https:/
 - **Python 3.10+** for the pipeline scripts.
 - **Git** for working with the upstream HTTPConnector.
 
-Optional: the [EDT-MCP plugin](https://github.com/DitriXNew/EDT-MCP) with the `translate_configuration` / `export_configuration_to_xml` / `run_language_tool` / `convert_to_translation_language` / `import_translations_from_translated_object` / `get_translation_project_info` / `cleanup_orphan_modules` tools — to drive the pipeline from an AI assistant (Claude Code, Cursor, Copilot).
+Optional: the [EDT-MCP plugin](https://github.com/DitriXNew/EDT-MCP) with the `translate_configuration` / `export_configuration_to_xml` / `generate_translation_strings` / `convert_to_translation_language` / `import_translations_from_translated_object` / `get_translation_project_info` / `cleanup_orphan_modules` tools — to drive the pipeline from an AI assistant (Claude Code, Cursor, Copilot).
 
 ## Quick start
 
