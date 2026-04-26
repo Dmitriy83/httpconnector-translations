@@ -195,7 +195,13 @@ Both language files must have identical key sets. If a target-language file is m
 
 ## Tooling — translation pipeline
 
-All pipeline scripts live in [scripts/](scripts/). Run them as `python scripts/<name>.py` from the repo root. They were developed against [dictionaries_en/](dictionaries_en/) (in the repo root) but are generic — retarget the `PROJ`/path constants at the top of each script to apply to another project.
+All scripts live in [scripts/](scripts/) under three subdirectories:
+
+- [scripts/pipeline/](scripts/pipeline/) — run on every rebuild (`accept_new_api`, `check_module_header_drift`, `check_translated2`, `cleanup_orphan_modules`, `postbuild_patch`, `verify_api`)
+- [scripts/analysis/](scripts/analysis/) — diagnostic / one-off analysis (`mine_compound_ids`, `extract_api_schema`, `extract_*_untranslated`, `find_*`, `analyze`, `estimate`, `camelcase_tokens`)
+- [scripts/migration/](scripts/migration/) — bootstrap from an older translation + dictionary hygiene (`migrate*`, `apply_*` paired with their `translations_*` / `camelcase_token_tr` data tables, `sort_dict`, `proper_split`, `fix_*`, `add_newparams_keys`, `fix_newparams_finale`)
+
+Run scripts as `python scripts/<group>/<name>.py` from the repo root. They were developed against [dictionaries_en/](dictionaries_en/) (in the repo root) but are generic — retarget the `PROJ`/path constants at the top of each script to apply to another project.
 
 See [POSTBUILD_PATCHER.md](POSTBUILD_PATCHER.md) for the standalone deep-dive on the post-build step and why it's necessary.
 

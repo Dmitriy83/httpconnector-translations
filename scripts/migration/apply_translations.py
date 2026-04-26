@@ -7,7 +7,7 @@ from pathlib import Path
 import importlib.util
 
 TARGET = Path(r"C:/git/httpconnector-translations/dictionaries_en/src/CommonModules/КоннекторHTTP/Module_en.trans")
-SRC = Path(r"C:/git/1c-translations-with-model/scripts/translations_module_trans.py")
+SRC = Path(__file__).parent / "translations_module_trans.py"
 
 
 def load_tr():

@@ -11,7 +11,7 @@ from pathlib import Path
 import importlib.util
 
 TARGET = Path(r"C:/git/httpconnector-translations/dictionaries_en/src/common-camelcase_en.dict")
-SRC = Path(r"C:/git/1c-translations-with-model/scripts/camelcase_token_tr.py")
+SRC = Path(__file__).parent / "camelcase_token_tr.py"
 
 
 def load_tr():
@@ -127,7 +127,7 @@ def main():
         all_missing.update(miss)
 
     if all_missing:
-        miss_file = Path(r"C:/git/1c-translations-with-model/camelcase_missing.txt")
+        miss_file = Path(r"C:/git/httpconnector-translations/camelcase_missing.txt")
         miss_file.write_text("\n".join(sorted(all_missing)) + "\n", encoding="utf-8")
         print(f"\nMISSING translations for {len(all_missing)} tokens — written to {miss_file}")
         print("\nAborting (not writing).")

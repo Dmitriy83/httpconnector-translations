@@ -27,6 +27,9 @@ httpconnector-translations/
 │       ├── CommonModules/…           # synonym + .trans/.lstr translations
 │       └── DataProcessors/…
 ├── scripts/                          # pipeline + diagnostic scripts
+│   ├── pipeline/                     #   run on every rebuild
+│   ├── analysis/                     #   diagnostic / one-off analysis
+│   └── migration/                    #   bootstrap + dictionary hygiene
 ├── api_schema.json                   # public API contract (42 exports)
 ├── CLAUDE.md                         # detailed technical documentation
 └── POSTBUILD_PATCHER.md              # deep dive into the post-build step
@@ -77,7 +80,7 @@ Optional: the [EDT-MCP plugin](https://github.com/DitriXNew/EDT-MCP) with the `t
 
 1. Import the source project `HTTPConnector_ru` (fork of https://github.com/vbondarevsky/Connector) and the dependent translation project `dictionaries_en` (this repository) into EDT.
 2. Make sure the parent-project name in [DEPENDENT.PMF](dictionaries_en/DT-INF/DEPENDENT.PMF) matches the imported source. Default: `HTTPConnector_ru`.
-3. Retarget the path constants at the top of each `scripts/*.py` file to your local checkout (defaults point to the maintainer's machine).
+3. Retarget the path constants at the top of each `scripts/<group>/*.py` file to your local checkout (defaults point to the maintainer's machine).
 4. Walk through the pipeline as documented in [CLAUDE.md → Translation workflow](CLAUDE.md).
 
 ## Scripts

@@ -27,6 +27,9 @@ httpconnector-translations/
 │       ├── CommonModules/…           # переводы синонимов и .trans/.lstr
 │       └── DataProcessors/…
 ├── scripts/                          # pipeline и диагностические скрипты
+│   ├── pipeline/                     #   запускаются на каждой пересборке
+│   ├── analysis/                     #   диагностика / одноразовый анализ
+│   └── migration/                    #   bootstrap + гигиена словарей
 ├── api_schema.json                   # контракт публичного API (42 экспорта)
 ├── CLAUDE.md                         # детальная техническая документация
 └── POSTBUILD_PATCHER.md              # глубокое описание post-build шага
@@ -77,7 +80,7 @@ Pipeline идемпотентный: повторный прогон даёт б
 
 1. Импортировать в EDT основной проект `HTTPConnector_ru` (форк https://github.com/vbondarevsky/Connector) и зависимый проект перевода `dictionaries_en` (этот репозиторий).
 2. Имя проекта-родителя в [DEPENDENT.PMF](dictionaries_en/DT-INF/DEPENDENT.PMF) должно совпадать с именем импортированного источника. По умолчанию — `HTTPConnector_ru`.
-3. Настроить пути в скриптах под свою машину — отредактировать константы `PROJ` / `MOD` в начале каждого `scripts/*.py` (по умолчанию они указывают на пути разработчика).
+3. Настроить пути в скриптах под свою машину — отредактировать константы `PROJ` / `MOD` в начале каждого `scripts/<group>/*.py` (по умолчанию они указывают на пути разработчика).
 4. Прогнать pipeline шаг за шагом по [CLAUDE.md → Translation workflow](CLAUDE.md).
 
 ## Скрипты
